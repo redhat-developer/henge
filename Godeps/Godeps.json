@@ -178,7 +178,7 @@
 			"Rev": "7ca2aa4873aea7cb4265b1726acb24b90d8726c6"
 		},
 		{
-			"ImportPath": "github.com/openshift/origin/pkg/api/latest",
+			"ImportPath": "github.com/openshift/origin/pkg/api",
 			"Comment": "v1.3.0-alpha.0-530-g0b66a27",
 			"Rev": "0b66a279745dcfc3b0c5bc179717ef39f85d086c"
 		},
@@ -189,6 +189,16 @@
 		},
 		{
 			"ImportPath": "github.com/openshift/origin/pkg/build/api",
+			"Comment": "v1.3.0-alpha.0-530-g0b66a27",
+			"Rev": "0b66a279745dcfc3b0c5bc179717ef39f85d086c"
+		},
+		{
+			"ImportPath": "github.com/openshift/origin/pkg/build/client",
+			"Comment": "v1.3.0-alpha.0-530-g0b66a27",
+			"Rev": "0b66a279745dcfc3b0c5bc179717ef39f85d086c"
+		},
+		{
+			"ImportPath": "github.com/openshift/origin/pkg/build/util",
 			"Comment": "v1.3.0-alpha.0-530-g0b66a27",
 			"Rev": "0b66a279745dcfc3b0c5bc179717ef39f85d086c"
 		},
