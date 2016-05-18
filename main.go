@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 
 	"github.com/kadel/henge/pkg/generate/dockercompose"
 )
