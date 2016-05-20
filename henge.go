@@ -8,13 +8,6 @@ import (
 	"github.com/rtnpro/henge/pkg/generate/dockercompose"
 	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
-
-	// Install OpenShift APIs
-	_ "github.com/openshift/origin/pkg/build/api/install"
-	_ "github.com/openshift/origin/pkg/deploy/api/install"
-	_ "github.com/openshift/origin/pkg/image/api/install"
-	_ "github.com/openshift/origin/pkg/route/api/install"
-	_ "github.com/openshift/origin/pkg/template/api/install"
 )
 
 func main() {
