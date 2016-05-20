@@ -2,13 +2,31 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"os"
 
-	"github.com/openshift/origin/pkg/generate/app"
 	"github.com/rtnpro/henge/pkg/generate/dockercompose"
+
 	kapi "k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/apimachinery/registered"
+	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/kubectl"
+	"k8s.io/kubernetes/pkg/runtime"
 )
+
+func convertToVersion(objs []runtime.Object, version string) ([]runtime.Object, error) {
+	ret := []runtime.Object{}
+
+	for _, obj := range objs {
+
+		convertedObject, err := kapi.Scheme.ConvertToVersion(obj, version)
+		if err != nil {
+			return nil, err
+		}
+
+		ret = append(ret, convertedObject)
+	}
+
+	return ret, nil
+}
 
 func main() {
 
@@ -19,16 +37,21 @@ func main() {
 		return
 	}
 
-	if errs := app.AsVersionedObjects(template.Objects, kapi.Scheme, kapi.Scheme, registered.EnabledVersions()...); len(errs) > 0 {
-		for _, err := range errs {
-			fmt.Printf("error: %v\n", err)
-		}
+	var convErr error
+	template.Objects, convErr = convertToVersion(template.Objects, "v1")
+	if convErr != nil {
+		panic(convErr)
 	}
 
 	// make it List instead of Template
 	list := &kapi.List{Items: template.Objects}
-	for _, obj := range list.Items {
-		fmt.Printf("%#v\n", obj)
+
+	p, _, err := kubectl.GetPrinter("yaml", "")
+	if err != nil {
+		panic(err)
 	}
+	version := unversioned.GroupVersion{Group: "", Version: "v1"}
+	p = kubectl.NewVersionedPrinter(p, kapi.Scheme, version)
+	p.PrintObj(list, os.Stdout)
 
 }
