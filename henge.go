@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/kadel/henge/pkg/generate/dockercompose"
 	"github.com/openshift/origin/pkg/generate/app"
+	"github.com/rtnpro/henge/pkg/generate/dockercompose"
 	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 

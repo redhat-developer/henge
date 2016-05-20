@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/kadel/henge",
+	"ImportPath": "github.com/rtnpro/henge",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v69",
 	"Deps": [
