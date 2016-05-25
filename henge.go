@@ -5,46 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redhat-developer/henge/pkg/generate/dockercompose"
-
-	kapi "k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/kubectl"
-	"k8s.io/kubernetes/pkg/runtime"
+	"github.com/rtnpro/henge/pkg/loaders/compose"
+	"github.com/rtnpro/henge/pkg/transformers"
 )
 
-func convertToVersion(objs []runtime.Object, version string) ([]runtime.Object, error) {
-	ret := []runtime.Object{}
-
-	for _, obj := range objs {
-
-		convertedObject, err := kapi.Scheme.ConvertToVersion(obj, version)
-		if err != nil {
-			return nil, err
-		}
-
-		ret = append(ret, convertedObject)
-	}
-
-	return ret, nil
-}
-
-// Loop over a array of filepaths and check if it exists
-// if it exists check if it is not a directory.
-func ifFileExists(files []string) error {
-	for _, filename := range files {
-		fileInfo, err := os.Stat(filename)
-		if err != nil {
-			return fmt.Errorf("main: file %q not found", filename)
-		}
-		if fileInfo.IsDir() {
-			return fmt.Errorf("main: %q is a directory", filename)
-		}
-	}
-	return nil
-}
-
 func main() {
+	provider := flag.String("provider", "openshift", "Target provider")
 
 	flag.Parse()
 
@@ -55,26 +21,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	template, err := dockercompose.Generate(files...)
+	project, err = compose.Load(flag.Args()[0:]...)
+
 	if err != nil {
+		fmt.Println("Error: ", err)
 		return
 	}
 
-	var convErr error
-	template.Objects, convErr = convertToVersion(template.Objects, "v1")
-	if convErr != nil {
-		panic(convErr)
-	}
-
-	// make it List instead of Template
-	list := &kapi.List{Items: template.Objects}
-
-	p, _, err := kubectl.GetPrinter("yaml", "")
-	if err != nil {
-		panic(err)
-	}
-	version := unversioned.GroupVersion{Group: "", Version: "v1"}
-	p = kubectl.NewVersionedPrinter(p, kapi.Scheme, version)
-	p.PrintObj(list, os.Stdout)
-
+	transformers.Transform(provider, project)
 }
