@@ -19,15 +19,17 @@ Follow instructions [here](https://golang.org/doc/code.html#GOPATH) to setup GO 
 ### Getting sources
 
 If you are building upstream code
-```bash 
+```bash
 go get github.com/rtnpro/henge
 cd $GOPATH/src/github.com/rtnpro/henge/
 ```
 
 If you developing and using your own fork
 ```bash
-go get github.com/<forkid>/henge
-cd $GOPATH/src/github.com/<forkid>/henge/
+mkdir -p $GOPATH/src/github.com/rtnpro
+cd $GOPATH/src/github.com/rtnpro
+git clone https://github.com/<forkid>/henge
+cd henge/
 git remote add upstream https://github.com/rtnpro/henge
 ```
 
