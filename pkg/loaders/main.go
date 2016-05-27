@@ -1,4 +1,4 @@
-package compose
+package loaders
 
 import (
 	"path/filepath"
@@ -6,11 +6,11 @@ import (
 	"github.com/openshift/origin/third_party/github.com/docker/libcompose/project"
 )
 
-func Load(paths ...string) (*project.Project, error) {
+func Compose(paths ...string) (*project.Project, []string, error) {
 	for i := range paths {
 		path, err := filepath.Abs(paths[i])
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		paths[i] = path
 	}
@@ -24,8 +24,8 @@ func Load(paths ...string) (*project.Project, error) {
 	}
 	p := project.NewProject(context)
 	if err := p.Parse(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return p, err
+	return p, bases, nil
 }
