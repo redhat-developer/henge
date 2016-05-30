@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/rtnpro/henge/pkg/generate/dockercompose"
+	"github.com/redhat-developer/henge/pkg/generate/dockercompose"
 
 	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
