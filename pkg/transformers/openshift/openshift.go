@@ -33,75 +33,93 @@ import (
 	_ "github.com/openshift/origin/pkg/template/api/install"
 )
 
-func Transform(p project.Project, bases []string) error {
-	var errs []error
+type TransformData struct {
+	errs         []error
+	warnings     map[string][]string
+	serviceOrder sets.String
+	joins        map[string]sets.String
+	volumesFrom  map[string][]string
+	colocated    []sets.String
+	builds       map[string]*app.Pipeline
+	pipelines    app.PipelineGroup
+	containers   map[string]*kapi.Container
+	objects      app.Objects
+	bases        []string
+	aliases      map[string]sets.String
+}
 
-	warnings := make(map[string][]string)
-	serviceOrder := getServiceOrder(&p, warnings)
+func Transform(p *project.Project, bases []string) error {
+	data := TransformData{
+		errs:         []error{},
+		warnings:     make(map[string][]string),
+		serviceOrder: sets.NewString(),
+		joins:        make(map[string]sets.String),
+		volumesFrom:  make(map[string][]string),
+		colocated:    []sets.String{},
+		builds:       make(map[string]*app.Pipeline),
+		pipelines:    app.PipelineGroup{},
+		containers:   make(map[string]*kapi.Container),
+		objects:      app.Objects{},
+		bases:        bases,
+		aliases:      make(map[string]sets.String),
+	}
 
-	joins := make(map[string]sets.String)
-	volumesFrom := make(map[string][]string)
+	updateServiceOrder(p, &data)
+	updateVolumes(p, &data)
 
-	updateVolumes(&p, volumesFrom, joins, serviceOrder)
-
-	colocated, err := getPodsList(&p, joins)
+	err := updatePodsList(p, &data)
 	if err != nil {
 		return err
 	}
 
-	aliases := getAliases(&p)
-
-	var pipelines app.PipelineGroup
-	builds := make(map[string]*app.Pipeline)
+	updateAliases(p, &data)
 
 	g := app.NewImageRefGenerator()
 
-	err = updateBuildPipeline(&p, pipelines, builds, serviceOrder, g,
-		bases, errs)
+	err = updateBuildPipeline(p, g, &data)
 	if err != nil {
 		return err
 	}
 
-	err = updateDeploymentConfigs(&p, colocated, builds, pipelines,
-		g, errs)
+	fmt.Println("After upateBuildPipeline")
+	fmt.Println("pipelines: ", data.pipelines)
+	fmt.Println("builds: ", data.builds)
+
+	err = updateDeploymentConfigs(p, g, &data)
 	if err != nil {
 		return err
 	}
 
-	if len(errs) > 0 {
-		return utilerrs.NewAggregate(errs)
+	if len(data.errs) > 0 {
+		return utilerrs.NewAggregate(data.errs)
 	}
 
-	objects := app.Objects{}
-
-	objects, err = insertPipelineObjects(objects, pipelines)
+	err = updatePipelineObjects(&data)
 	if err != nil {
 		return err
 	}
 
-	containers := make(map[string]*kapi.Container)
-	objects, err = insertServiceObjects(objects, aliases, containers)
+	err = updateServiceObjects(&data)
 
 	template := &templateapi.Template{}
 	template.Name = p.Name
-	template.Objects = objects
 
 	// for each container that defines VolumesFrom, copy equivalent mounts.
 	// TODO: ensure mount names are unique?
-	for target, otherContainers := range volumesFrom {
+	for target, otherContainers := range data.volumesFrom {
 		for _, from := range otherContainers {
-			for _, volume := range containers[from].VolumeMounts {
-				containers[target].VolumeMounts = append(containers[target].VolumeMounts, volume)
+			for _, volume := range data.containers[from].VolumeMounts {
+				data.containers[target].VolumeMounts = append(data.containers[target].VolumeMounts, volume)
 			}
 		}
 	}
 
-	template.Objects = objects
+	template.Objects = data.objects
 
 	// generate warnings
-	if len(warnings) > 0 {
+	if len(data.warnings) > 0 {
 		allWarnings := sets.NewString()
-		for msg, services := range warnings {
+		for msg, services := range data.warnings {
 			allWarnings.Insert(fmt.Sprintf("%s: %s", strings.Join(services, ","), msg))
 		}
 		if template.Annotations == nil {
@@ -131,105 +149,98 @@ func Transform(p project.Project, bases []string) error {
 }
 
 // Get ordered services
-func getServiceOrder(p *project.Project, warnings map[string][]string) sets.String {
-	serviceOrder := sets.NewString()
+func updateServiceOrder(p *project.Project, data *TransformData) {
 	for k, v := range p.Configs {
-		serviceOrder.Insert(k)
-		warnUnusableComposeElements(k, v, warnings)
+		data.serviceOrder.Insert(k)
+		warnUnusableComposeElements(k, v, data.warnings)
 	}
-	return serviceOrder
 }
 
 // Update volumes, and joins as well
-func updateVolumes(p *project.Project, volumesFrom map[string][]string, joins map[string]sets.String, serviceOrder sets.String) {
-	for _, k := range serviceOrder.List() {
-		if joins[k] == nil {
-			joins[k] = sets.NewString(k)
+func updateVolumes(p *project.Project, data *TransformData) {
+	for _, k := range data.serviceOrder.List() {
+		if data.joins[k] == nil {
+			data.joins[k] = sets.NewString(k)
 		}
 		v := p.Configs[k]
 		for _, from := range v.VolumesFrom {
 			switch parts := strings.Split(from, ":"); len(parts) {
 			case 1:
-				joins[k].Insert(parts[0])
-				volumesFrom[k] = append(volumesFrom[k], parts[0])
+				data.joins[k].Insert(parts[0])
+				data.volumesFrom[k] = append(data.volumesFrom[k], parts[0])
 			case 2:
 				target := parts[1]
 				if parts[1] == "ro" || parts[1] == "rw" {
 					target = parts[0]
 				}
-				joins[k].Insert(target)
-				volumesFrom[k] = append(volumesFrom[k], target)
+				data.joins[k].Insert(target)
+				data.volumesFrom[k] = append(data.volumesFrom[k], target)
 			case 3:
-				joins[k].Insert(parts[1])
-				volumesFrom[k] = append(volumesFrom[k], parts[1])
+				data.joins[k].Insert(parts[1])
+				data.volumesFrom[k] = append(data.volumesFrom[k], parts[1])
 			}
 		}
 	}
 }
 
 // Get colocated pods list
-func getPodsList(p *project.Project, joins map[string]sets.String) ([]sets.String, error) {
+func updatePodsList(p *project.Project, data *TransformData) error {
 	joinOrder := sets.NewString()
-	for k := range joins {
+	for k := range data.joins {
 		joinOrder.Insert(k)
 	}
-	var colocated []sets.String
 	for _, k := range joinOrder.List() {
-		set := joins[k]
+		set := data.joins[k]
 		matched := -1
-		for i, existing := range colocated {
+		for i, existing := range data.colocated {
 			if set.Intersection(existing).Len() == 0 {
 				continue
 			}
 			if matched != -1 {
-				return nil, fmt.Errorf("%q belongs with %v, but %v also contains some overlapping elements", k, set, colocated[matched])
+				return fmt.Errorf("%q belongs with %v, but %v also contains some overlapping elements", k, set, data.colocated[matched])
 			}
 			existing.Insert(set.List()...)
 			matched = i
 			continue
 		}
 		if matched == -1 {
-			colocated = append(colocated, set)
+			data.colocated = append(data.colocated, set)
 		}
 	}
-	return colocated, nil
+	return nil
 }
 
 // Get service aliases
-func getAliases(p *project.Project) map[string]sets.String {
-	aliases := make(map[string]sets.String)
+func updateAliases(p *project.Project, data *TransformData) {
 	for _, v := range p.Configs {
 		for _, s := range v.Links.Slice() {
 			parts := strings.SplitN(s, ":", 2)
 			if len(parts) != 2 || parts[0] == parts[1] {
 				continue
 			}
-			set := aliases[parts[0]]
+			set := data.aliases[parts[0]]
 			if set == nil {
 				set = sets.NewString()
-				aliases[parts[0]] = set
+				data.aliases[parts[0]] = set
 			}
 			set.Insert(parts[1])
 		}
 	}
-	return aliases
 }
 
 // find and define build pipelines
-func updateBuildPipeline(p *project.Project, pipelines app.PipelineGroup,
-	builds map[string]*app.Pipeline, serviceOrder sets.String,
-	g app.ImageRefGenerator, bases []string, errs []error) error {
+func updateBuildPipeline(p *project.Project, g app.ImageRefGenerator, data *TransformData) error {
 
-	for _, k := range serviceOrder.List() {
+	for _, k := range data.serviceOrder.List() {
 		v := p.Configs[k]
 		if len(v.Build) == 0 {
 			continue
 		}
-		if _, ok := builds[v.Build]; ok {
+		if _, ok := data.builds[v.Build]; ok {
 			continue
 		}
 		var base, relative string
-		for _, s := range bases {
+		for _, s := range data.bases {
 			if !strings.HasPrefix(v.Build, s) {
 				continue
 			}
@@ -259,20 +270,20 @@ func updateBuildPipeline(p *project.Project, pipelines app.PipelineGroup,
 		glog.V(4).Infof("compose service: %#v", v)
 		repo, err := app.NewSourceRepositoryWithDockerfile(buildPath, "")
 		if err != nil {
-			errs = append(errs, err)
+			data.errs = append(data.errs, err)
 			continue
 		}
 		repo.BuildWithDocker()
 
 		info := repo.Info()
 		if info == nil || info.Dockerfile == nil {
-			errs = append(errs, fmt.Errorf("unable to locate a Dockerfile in %s", v.Build))
+			data.errs = append(data.errs, fmt.Errorf("unable to locate a Dockerfile in %s", v.Build))
 			continue
 		}
 		node := info.Dockerfile.AST()
 		baseImage := dockerfileutil.LastBaseImage(node)
 		if len(baseImage) == 0 {
-			errs = append(errs, fmt.Errorf("the Dockerfile in the repository %q has no FROM instruction", info.Path))
+			data.errs = append(data.errs, fmt.Errorf("the Dockerfile in the repository %q has no FROM instruction", info.Path))
 			continue
 		}
 
@@ -284,7 +295,7 @@ func updateBuildPipeline(p *project.Project, pipelines app.PipelineGroup,
 
 		image, err := g.FromNameAndPorts(baseImage, ports)
 		if err != nil {
-			errs = append(errs, err)
+			data.errs = append(data.errs, err)
 			continue
 		}
 		image.AsImageStream = true
@@ -294,7 +305,7 @@ func updateBuildPipeline(p *project.Project, pipelines app.PipelineGroup,
 
 		pipeline, err := app.NewPipelineBuilder(k, nil, false).To(k).NewBuildPipeline(k, image, repo)
 		if err != nil {
-			errs = append(errs, err)
+			data.errs = append(data.errs, err)
 			continue
 		}
 		if len(relative) > 0 {
@@ -306,23 +317,21 @@ func updateBuildPipeline(p *project.Project, pipelines app.PipelineGroup,
 		pipeline.Image.ObjectName = k
 		glog.V(4).Infof("created pipeline %+v", pipeline)
 
-		builds[v.Build] = pipeline
-		pipelines = append(pipelines, pipeline)
+		data.builds[v.Build] = pipeline
+		data.pipelines = append(data.pipelines, pipeline)
 	}
 
-	if len(errs) > 0 {
-		return utilerrs.NewAggregate(errs)
+	if len(data.errs) > 0 {
+		return utilerrs.NewAggregate(data.errs)
 	}
 
 	return nil
 }
 
-func updateDeploymentConfigs(p *project.Project, colocated []sets.String,
-	builds map[string]*app.Pipeline, pipelines app.PipelineGroup,
-	g app.ImageRefGenerator, errs []error) error {
+func updateDeploymentConfigs(p *project.Project, g app.ImageRefGenerator, data *TransformData) error {
 
 	// create deployment groups
-	for _, pod := range colocated {
+	for _, pod := range data.colocated {
 		var group app.PipelineGroup
 		commonMounts := make(map[string]string)
 		for _, k := range pod.List() {
@@ -332,7 +341,7 @@ func updateDeploymentConfigs(p *project.Project, colocated []sets.String,
 			if len(v.Image) != 0 {
 				image, err := g.FromName(v.Image)
 				if err != nil {
-					errs = append(errs, err)
+					data.errs = append(data.errs, err)
 					continue
 				}
 				image.AsImageStream = true
@@ -342,12 +351,12 @@ func updateDeploymentConfigs(p *project.Project, colocated []sets.String,
 				inputImage = image
 			}
 			if inputImage == nil {
-				if previous, ok := builds[v.Build]; ok {
+				if previous, ok := data.builds[v.Build]; ok {
 					inputImage = previous.Image
 				}
 			}
 			if inputImage == nil {
-				errs = append(errs, fmt.Errorf("could not find an input image for %q", k))
+				data.errs = append(data.errs, fmt.Errorf("could not find an input image for %q", k))
 				continue
 			}
 
@@ -454,7 +463,7 @@ func updateDeploymentConfigs(p *project.Project, colocated []sets.String,
 
 			pipeline, err := app.NewPipelineBuilder(k, nil, true).To(k).NewImagePipeline(k, inputImage)
 			if err != nil {
-				errs = append(errs, err)
+				data.errs = append(data.errs, err)
 				break
 			}
 
@@ -467,30 +476,29 @@ func updateDeploymentConfigs(p *project.Project, colocated []sets.String,
 		if err := group.Reduce(); err != nil {
 			return err
 		}
-		pipelines = append(pipelines, group...)
+		data.pipelines = append(data.pipelines, group...)
 	}
 	return nil
 }
 
-func insertPipelineObjects(objects app.Objects, pipelines app.PipelineGroup) (app.Objects, error) {
+func updatePipelineObjects(data *TransformData) error {
 	acceptors := app.Acceptors{app.NewAcceptUnique(kapi.Scheme), app.AcceptNew}
 	accept := app.NewAcceptFirst()
-	for _, p := range pipelines {
+	for _, p := range data.pipelines {
 		accepted, err := p.Objects(accept, acceptors)
 		if err != nil {
-			return nil, fmt.Errorf("can't setup %q: %v", p.From, err)
+			return fmt.Errorf("can't setup %q: %v", p.From, err)
 		}
-		objects = append(objects, accepted...)
+		data.objects = append(data.objects, accepted...)
 	}
-	return objects, nil
+	return nil
 }
 
-func insertServiceObjects(objects app.Objects, aliases map[string]sets.String,
-	containers map[string]*kapi.Container) (app.Objects, error) {
+func updateServiceObjects(data *TransformData) error {
 
 	// create services for each object with a name based on alias.
 	var services []*kapi.Service
-	for _, obj := range objects {
+	for _, obj := range data.objects {
 		switch t := obj.(type) {
 		case *deployapi.DeploymentConfig:
 			ports := app.UniqueContainerToServicePorts(app.AllContainerPorts(t.Spec.Template.Spec.Containers...))
@@ -498,8 +506,8 @@ func insertServiceObjects(objects app.Objects, aliases map[string]sets.String,
 				continue
 			}
 			svc := app.GenerateService(t.ObjectMeta, t.Spec.Selector)
-			if aliases[svc.Name].Len() == 1 {
-				svc.Name = aliases[svc.Name].List()[0]
+			if data.aliases[svc.Name].Len() == 1 {
+				svc.Name = data.aliases[svc.Name].List()[0]
 			}
 			svc.Spec.Ports = ports
 			services = append(services, svc)
@@ -507,15 +515,15 @@ func insertServiceObjects(objects app.Objects, aliases map[string]sets.String,
 			// take a reference to each container
 			for i := range t.Spec.Template.Spec.Containers {
 				c := &t.Spec.Template.Spec.Containers[i]
-				containers[c.Name] = c
+				data.containers[c.Name] = c
 			}
 		}
 	}
 	for _, svc := range services {
-		objects = append(objects, svc)
+		data.objects = append(data.objects, svc)
 	}
 
-	return objects, nil
+	return nil
 }
 
 // extractFirstPorts converts a Docker compose port spec (CONTAINER, HOST:CONTAINER, or

@@ -11,7 +11,7 @@ import (
 
 // Transform transforms the given project into artifacts for the specified
 // provider
-func Transform(provider string, project project.Project, bases []string) error {
+func Transform(provider string, project *project.Project, bases []string) error {
 	if provider == "openshift" {
 		err := openshift.Transform(project, bases)
 		if err != nil {

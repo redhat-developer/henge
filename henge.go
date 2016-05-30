@@ -23,10 +23,14 @@ func main() {
 
 	project, bases, err := loaders.Compose(flag.Args()[0:]...)
 
+	fmt.Println("provider: ", *provider)
+	fmt.Println("project: ", *project)
+	fmt.Println("bases: ", bases)
+
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
 	}
 
-	transformers.Transform(*provider, *project, bases)
+	transformers.Transform(*provider, project, bases)
 }
