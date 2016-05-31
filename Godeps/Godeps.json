@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/rtnpro/henge",
+	"ImportPath": "github.com/redhat-developer/henge",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v69",
 	"Deps": [
