@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/redhat-developer/henge/pkg/generate/dockercompose"
@@ -28,11 +29,33 @@ func convertToVersion(objs []runtime.Object, version string) ([]runtime.Object, 
 	return ret, nil
 }
 
+// Loop over a array of filepaths and check if it exists
+// if it exists check if it is not a directory.
+func ifFileExists(files []string) error {
+	for _, filename := range files {
+		fileInfo, err := os.Stat(filename)
+		if err != nil {
+			return fmt.Errorf("main: file %q not found", filename)
+		}
+		if fileInfo.IsDir() {
+			return fmt.Errorf("main: %q is a directory", filename)
+		}
+	}
+	return nil
+}
+
 func main() {
 
 	flag.Parse()
 
-	template, err := dockercompose.Generate(flag.Args()[0:]...)
+	files := flag.Args()
+	err := ifFileExists(files)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+
+	template, err := dockercompose.Generate(files...)
 	if err != nil {
 		return
 	}
