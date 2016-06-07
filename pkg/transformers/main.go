@@ -3,7 +3,7 @@ package transformers
 import (
 	"fmt"
 
-	"github.com/rtnpro/henge/pkg/transformers/openshift"
+	"github.com/redhat-developer/henge/pkg/transformers/openshift"
 )
 
 // Transform transforms the given project into artifacts for the specified

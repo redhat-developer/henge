@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rtnpro/henge/pkg/transformers"
+	"github.com/redhat-developer/henge/pkg/transformers"
 )
 
 // Loop over a array of filepaths and check if it exists
