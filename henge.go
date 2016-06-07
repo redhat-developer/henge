@@ -28,6 +28,11 @@ func main() {
 
 	flag.Parse()
 
+	if *provider == "" {
+		fmt.Fprintln(os.Stderr, "No provider specified")
+		os.Exit(1)
+	}
+
 	files := flag.Args()
 	err := ifFileExists(files)
 	if err != nil {
