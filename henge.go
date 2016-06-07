@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rtnpro/henge/pkg/loaders"
 	"github.com/rtnpro/henge/pkg/transformers"
 )
 
@@ -21,16 +20,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	project, bases, err := loaders.Compose(flag.Args()[0:]...)
-
-	fmt.Println("provider: ", *provider)
-	fmt.Println("project: ", *project)
-	fmt.Println("bases: ", bases)
-
+	err := transformers.Transform(*provider, flag.Args()[0:]...)
 	if err != nil {
-		fmt.Println("Error: ", err)
-		return
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
 	}
-
-	transformers.Transform(*provider, project, bases)
 }
