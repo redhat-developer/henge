@@ -37,6 +37,16 @@ import (
 type ComposeProject project.Project
 
 func Transform(paths ...string) (*templateapi.Template, error) {
+
+	// covert paths to absolute path
+	for i := range paths {
+		path, err := filepath.Abs(paths[i])
+		if err != nil {
+			return nil, err
+		}
+		paths[i] = path
+	}
+
 	// Load compose project
 	compose, err := loadCompose(paths...)
 	if err != nil {
