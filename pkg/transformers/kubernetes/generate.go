@@ -20,7 +20,7 @@ import (
 )
 
 // Generate accepts a set of Docker compose project paths and converts them in an
-// OpenShift template definition.
+// Kubernetes List.
 func Generate(paths ...string) (*kapi.List, error) {
 	for i := range paths {
 		path, err := filepath.Abs(paths[i])
@@ -60,6 +60,9 @@ func Generate(paths ...string) (*kapi.List, error) {
 			joins[k] = sets.NewString(k)
 		}
 		v := p.Configs[k]
+		if len(v.Build) != 0 {
+			return nil, fmt.Errorf("Build is not currently supported for Kubernetes")
+		}
 		for _, from := range v.VolumesFrom {
 			switch parts := strings.Split(from, ":"); len(parts) {
 			case 1:
