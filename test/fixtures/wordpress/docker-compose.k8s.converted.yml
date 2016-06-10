@@ -1,0 +1,106 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: ReplicationController
+  metadata:
+    annotations:
+      app.henge/warnings: |-
+        not all docker-compose fields were honored:
+        * restart is ignored - all pods are automatically restarted
+    creationTimestamp: null
+    name: db
+  spec:
+    replicas: 1
+    selector:
+      replicationcontroller: db
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          replicationcontroller: db
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_DATABASE
+            value: wordpress
+          - name: MYSQL_PASSWORD
+            value: wordpress
+          - name: MYSQL_ROOT_PASSWORD
+            value: wordpress
+          - name: MYSQL_USER
+            value: wordpress
+          image: mysql:5.7
+          name: db
+          ports:
+          - containerPort: 3306
+          resources: {}
+          volumeMounts:
+          - mountPath: /var/lib/mysql
+            name: dir-1
+        volumes:
+        - emptyDir: {}
+          name: dir-1
+  status:
+    replicas: 0
+- apiVersion: v1
+  kind: ReplicationController
+  metadata:
+    annotations:
+      app.henge/warnings: |-
+        not all docker-compose fields were honored:
+        * restart is ignored - all pods are automatically restarted
+    creationTimestamp: null
+    name: wordpress
+  spec:
+    replicas: 1
+    selector:
+      replicationcontroller: wordpress
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          replicationcontroller: wordpress
+      spec:
+        containers:
+        - env:
+          - name: WORDPRESS_DB_HOST
+            value: db:3306
+          - name: WORDPRESS_DB_PASSWORD
+            value: wordpress
+          image: wordpress:latest
+          name: wordpress
+          ports:
+          - containerPort: 80
+          resources: {}
+  status:
+    replicas: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: db
+  spec:
+    ports:
+    - name: 3306-tcp
+      port: 3306
+      targetPort: 3306
+    selector:
+      replicationcontroller: db
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: wordpress
+  spec:
+    ports:
+    - name: 80-tcp
+      port: 80
+      targetPort: 80
+    selector:
+      replicationcontroller: wordpress
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}
