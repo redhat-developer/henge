@@ -1,5 +1,5 @@
 # Henge
-Transform multi container spec across providers: Docker Compose, Kubernetes, Openshift, etc.
+Convert multi-container application defined using Docker Compose to Kubernetes and/or Openshift.
 
 Project goals:
 - The tool should be intelligent and interactive enough to ask the right questions when it is trying to convert and assume sane defaults
@@ -10,9 +10,10 @@ Project goals:
 
 ## Usage
 
+### Example
 ```
-# This takes a Docker compose spec file and prints generated kubernetes artifacts
-henge compose.yml
+# This takes a Docker compose spec file and prints generated OpenShift artifacts
+henge -provider openshift compose.yml
 ```
 
 
@@ -56,6 +57,6 @@ GO15VENDOREXPERIMENT=1 go build henge.go
 ### Debug
 You can run henge with verbose logging by adding `-v 5` option
 ```
-./henge -v 5 docker-compose.yml
+./henge -v 5 -provider openshift docker-compose.yml
 ```
 
