@@ -217,11 +217,13 @@ type EnvironmentSpec struct {
 // EnvironmentList contains list of environment variables.
 type EnvironmentList []EnvironmentSpec
 
+// ProxyConfig holds proxy configuration.
 type ProxyConfig struct {
 	HTTPProxy  *url.URL
 	HTTPSProxy *url.URL
 }
 
+// CGroupLimits holds limits used to constrain container resources.
 type CGroupLimits struct {
 	MemoryLimitBytes int64
 	CPUShares        int64
@@ -230,7 +232,7 @@ type CGroupLimits struct {
 	MemorySwap       int64
 }
 
-// Volume represents a single volume mount point
+// VolumeSpec represents a single volume mount point.
 type VolumeSpec struct {
 	Source      string
 	Destination string
@@ -450,7 +452,7 @@ func (e *EnvironmentList) Set(value string) error {
 		return fmt.Errorf("invalid environment format %q, must be NAME=VALUE", value)
 	}
 	if strings.Contains(parts[1], ",") && strings.Contains(parts[1], "=") {
-		glog.Warningf("DEPRECATED: Use multiple -e flags to specify multiple environment variables instead of comma (%q)", parts[1])
+		glog.Warningf("DEPRECATED: Use multiple -e flags to specify multiple environment variables instead of comma (%q)", value)
 	}
 	*e = append(*e, EnvironmentSpec{
 		Name:  strings.TrimSpace(parts[0]),

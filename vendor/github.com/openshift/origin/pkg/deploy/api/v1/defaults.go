@@ -7,13 +7,19 @@ import (
 	deployapi "github.com/openshift/origin/pkg/deploy/api"
 )
 
-func defaultTagImagesHookContainerName(hook *LifecycleHook, containerName string) {
+// Keep this in sync with pkg/api/serialization_test.go#defaultHookContainerName
+func defaultHookContainerName(hook *LifecycleHook, containerName string) {
 	if hook == nil {
 		return
 	}
 	for i := range hook.TagImages {
 		if len(hook.TagImages[i].ContainerName) == 0 {
 			hook.TagImages[i].ContainerName = containerName
+		}
+	}
+	if hook.ExecNewPod != nil {
+		if len(hook.ExecNewPod.ContainerName) == 0 {
+			hook.ExecNewPod.ContainerName = containerName
 		}
 	}
 }
@@ -38,13 +44,13 @@ func addDefaultingFuncs(scheme *runtime.Scheme) {
 			if obj.Template != nil && len(obj.Template.Spec.Containers) == 1 {
 				containerName := obj.Template.Spec.Containers[0].Name
 				if p := obj.Strategy.RecreateParams; p != nil {
-					defaultTagImagesHookContainerName(p.Pre, containerName)
-					defaultTagImagesHookContainerName(p.Mid, containerName)
-					defaultTagImagesHookContainerName(p.Post, containerName)
+					defaultHookContainerName(p.Pre, containerName)
+					defaultHookContainerName(p.Mid, containerName)
+					defaultHookContainerName(p.Post, containerName)
 				}
 				if p := obj.Strategy.RollingParams; p != nil {
-					defaultTagImagesHookContainerName(p.Pre, containerName)
-					defaultTagImagesHookContainerName(p.Post, containerName)
+					defaultHookContainerName(p.Pre, containerName)
+					defaultHookContainerName(p.Post, containerName)
 				}
 			}
 		},
@@ -94,9 +100,14 @@ func addDefaultingFuncs(scheme *runtime.Scheme) {
 				}
 			}
 		},
-		func(obj *DeploymentTriggerImageChangeParams) {
-			if len(obj.From.Kind) == 0 {
-				obj.From.Kind = "ImageStreamTag"
+		func(obj *DeploymentConfig) {
+			for _, t := range obj.Spec.Triggers {
+				if t.ImageChangeParams != nil {
+					t.ImageChangeParams.From.Kind = "ImageStreamTag"
+					if len(t.ImageChangeParams.From.Name) > 0 && len(t.ImageChangeParams.From.Namespace) == 0 {
+						t.ImageChangeParams.From.Namespace = obj.Namespace
+					}
+				}
 			}
 		},
 	)

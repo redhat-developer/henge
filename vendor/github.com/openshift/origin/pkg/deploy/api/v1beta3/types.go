@@ -284,6 +284,10 @@ type DeploymentConfigSpec struct {
 	// or failing. Post strategy hooks and After actions can be used to integrate successful deployment with an action.
 	Test bool `json:"test"`
 
+	// Paused indicates that the deployment config is paused resulting in no new deployments on template
+	// changes or changes in the template caused by other triggers.
+	Paused bool `json:"paused,omitempty"`
+
 	// Selector is a label query over pods that should match the Replicas count.
 	Selector map[string]string `json:"selector,omitempty"`
 
@@ -324,7 +328,10 @@ const (
 
 // DeploymentTriggerImageChangeParams represents the parameters to the ImageChange trigger.
 type DeploymentTriggerImageChangeParams struct {
-	// Automatic means that the detection of a new tag value should result in a new deployment.
+	// Automatic means that the detection of a new tag value should result in an image update
+	// inside the pod template. Deployment configs that haven't been deployed yet will always
+	// have their images updated. Deployment configs that have been deployed at least once, will
+	// have their images updated only if this is set to true.
 	Automatic bool `json:"automatic,omitempty"`
 	// ContainerNames is used to restrict tag updates to the specified set of container names in a pod.
 	ContainerNames []string `json:"containerNames,omitempty"`
@@ -410,7 +417,7 @@ type DeploymentLogOptions struct {
 	// Only one of sinceSeconds or sinceTime may be specified.
 	SinceSeconds *int64 `json:"sinceSeconds,omitempty"`
 	// An RFC3339 timestamp from which to show logs. If this value
-	// preceeds the time a pod was started, only logs since the pod start will be returned.
+	// precedes the time a pod was started, only logs since the pod start will be returned.
 	// If this value is in the future, no logs will be returned.
 	// Only one of sinceSeconds or sinceTime may be specified.
 	SinceTime *unversioned.Time `json:"sinceTime,omitempty"`
