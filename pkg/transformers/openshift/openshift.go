@@ -39,7 +39,7 @@ type ComposeProject project.Project
 
 func Transform(paths ...string) (*templateapi.Template, error) {
 
-	template, err = dockercompose.Generate(paths...)
+	template, err := dockercompose.Generate(paths...)
 
 	if err != nil {
 		return nil, err
