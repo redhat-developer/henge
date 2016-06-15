@@ -45,6 +45,13 @@ func Transform(paths ...string) (*templateapi.Template, error) {
 		return nil, err
 	}
 
+	// Convert template objects to versioned objects
+	var convErr error
+	template.Objects, convErr = convertToVersion(template.Objects, "v1")
+	if convErr != nil {
+		panic(convErr)
+	}
+
 	return template, err
 }
 
