@@ -22,6 +22,7 @@ import (
 
 	deployapi "github.com/openshift/origin/pkg/deploy/api"
 	"github.com/openshift/origin/pkg/generate/app"
+	"github.com/openshift/origin/pkg/generate/dockercompose"
 	"github.com/openshift/origin/pkg/generate/git"
 	templateapi "github.com/openshift/origin/pkg/template/api"
 	dockerfileutil "github.com/openshift/origin/pkg/util/docker/dockerfile"
@@ -38,66 +39,13 @@ type ComposeProject project.Project
 
 func Transform(paths ...string) (*templateapi.Template, error) {
 
-	// covert paths to absolute path
-	for i := range paths {
-		path, err := filepath.Abs(paths[i])
-		if err != nil {
-			return nil, err
-		}
-		paths[i] = path
-	}
+	template, err = dockercompose.Generate(paths...)
 
-	// Load compose project
-	compose, err := loadCompose(paths...)
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate base paths for compose files
-	var basePaths []string
-	for _, s := range paths {
-		basePaths = append(basePaths, filepath.Dir(s))
-	}
-
-	orderedServices := compose.getOrderedServices()
-	containerGroups := make(map[string]sets.String)
-	volumesFrom := compose.getVolumesFrom(orderedServices, containerGroups)
-	pods, err := compose.getPods(containerGroups)
-	aliases := compose.getAliases()
-
-	g := app.NewImageRefGenerator()
-	errs := []error{}
-
-	builds, err := getBuilds(compose, orderedServices, basePaths, g, &errs)
-	if err != nil {
-		return nil, err
-	}
-	pipelines := app.PipelineGroup{}
-
-	for _, v := range builds {
-		pipelines = append(pipelines, v)
-	}
-
-	err = insertDeploymentConfigsIntoPipelines(compose, &pipelines, builds, pods, g, &errs)
-	if err != nil {
-		return nil, err
-	}
-
-	objects := app.Objects{}
-	err = updatePipelineObjects(&objects, pipelines)
-	if err != nil {
-		return nil, err
-	}
-
-	containers := make(map[string]*kapi.Container)
-	err = updateServiceObjects(&objects, aliases, containers)
-	if err != nil {
-		return nil, err
-	}
-
-	template := generateTemplate(compose, volumesFrom, containers, objects)
-
-	return template, nil
+	return template, err
 }
 
 // Load compose project from paths to compose files
