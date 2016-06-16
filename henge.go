@@ -5,29 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redhat-developer/henge/pkg/generate/dockercompose"
-
-	kapi "k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/kubectl"
-	"k8s.io/kubernetes/pkg/runtime"
+	"github.com/redhat-developer/henge/pkg/transformers"
 )
-
-func convertToVersion(objs []runtime.Object, version string) ([]runtime.Object, error) {
-	ret := []runtime.Object{}
-
-	for _, obj := range objs {
-
-		convertedObject, err := kapi.Scheme.ConvertToVersion(obj, version)
-		if err != nil {
-			return nil, err
-		}
-
-		ret = append(ret, convertedObject)
-	}
-
-	return ret, nil
-}
 
 // Loop over a array of filepaths and check if it exists
 // if it exists check if it is not a directory.
@@ -45,8 +24,14 @@ func ifFileExists(files []string) error {
 }
 
 func main() {
+	provider := flag.String("provider", "", "Target provider")
 
 	flag.Parse()
+
+	if *provider == "" {
+		fmt.Fprintln(os.Stderr, "No provider specified")
+		os.Exit(1)
+	}
 
 	files := flag.Args()
 	err := ifFileExists(files)
@@ -55,26 +40,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	template, err := dockercompose.Generate(files...)
+	err = transformers.Transform(*provider, flag.Args()[0:]...)
 	if err != nil {
-		return
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
 	}
-
-	var convErr error
-	template.Objects, convErr = convertToVersion(template.Objects, "v1")
-	if convErr != nil {
-		panic(convErr)
-	}
-
-	// make it List instead of Template
-	list := &kapi.List{Items: template.Objects}
-
-	p, _, err := kubectl.GetPrinter("yaml", "")
-	if err != nil {
-		panic(err)
-	}
-	version := unversioned.GroupVersion{Group: "", Version: "v1"}
-	p = kubectl.NewVersionedPrinter(p, kapi.Scheme, version)
-	p.PrintObj(list, os.Stdout)
-
 }

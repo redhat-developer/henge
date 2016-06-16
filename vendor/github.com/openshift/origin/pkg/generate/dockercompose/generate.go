@@ -20,13 +20,6 @@ import (
 	templateapi "github.com/openshift/origin/pkg/template/api"
 	dockerfileutil "github.com/openshift/origin/pkg/util/docker/dockerfile"
 	"github.com/openshift/origin/third_party/github.com/docker/libcompose/project"
-
-	// Install OpenShift APIs
-	_ "github.com/openshift/origin/pkg/build/api/install"
-	_ "github.com/openshift/origin/pkg/deploy/api/install"
-	_ "github.com/openshift/origin/pkg/image/api/install"
-	_ "github.com/openshift/origin/pkg/route/api/install"
-	_ "github.com/openshift/origin/pkg/template/api/install"
 )
 
 func IsPossibleDockerCompose(path string) bool {
@@ -410,6 +403,8 @@ func Generate(paths ...string) (*templateapi.Template, error) {
 		case *deployapi.DeploymentConfig:
 			ports := app.UniqueContainerToServicePorts(app.AllContainerPorts(t.Spec.Template.Spec.Containers...))
 			if len(ports) == 0 {
+				msg := "no ports defined to send traffic to - no OpenShift service was created"
+				warnings[msg] = append(warnings[msg], t.Name)
 				continue
 			}
 			svc := app.GenerateService(t.ObjectMeta, t.Spec.Selector)

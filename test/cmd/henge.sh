@@ -16,18 +16,17 @@ function initTmp(){
 
 # regular henge run, verify right exit code
 function test_exitCodeSuccess() {
-   henge ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+   henge -provider openshift ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
     if [[ "${exit_code}" -eq "0" ]]; then
         return 0
     else
         return 1
     fi
-
 }
 
 # test right exit code when compose file doesn't exist
 function test_fileNotExist(){
-    henge nonexiting_file
+    henge -provider openshift nonexiting_file
     local exit_code=$?
     if [[ "${exit_code}" -ne "0" ]]; then
         return 0
@@ -36,11 +35,24 @@ function test_fileNotExist(){
     fi
 }
 
+# test right exit code when non existing provider
+function test_nonExistigProvider(){
+    henge -provider nonexisting ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+    local exit_code=$?
+    if [[ "${exit_code}" -ne "0" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+
 # Utility function compere actual henge output with expected output
 function compereOutput(){
     local dockerComposeFile=${1}
     local expectedOutput=${2}
-    henge ${dockerComposeFile} > ${TMP_DIR}/compereOutput
+    henge -provider openshift ${dockerComposeFile} > ${TMP_DIR}/compereOutput
     
     # skip ref,secret,uri field  - they are different every time
     diff --suppress-common-lines -y ${TMP_DIR}/compereOutput ${expectedOutput} \
