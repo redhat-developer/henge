@@ -1,12 +1,7 @@
 package openshift
 
 import (
-	"os"
-
 	kapi "k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/kubectl"
-	"k8s.io/kubernetes/pkg/runtime"
 
 	"github.com/openshift/origin/pkg/generate/dockercompose"
 	templateapi "github.com/openshift/origin/pkg/template/api"
@@ -19,7 +14,7 @@ import (
 	_ "github.com/openshift/origin/pkg/template/api/install"
 )
 
-func Transform(paths ...string) (*templateapi.Template, error) {
+func Transform(paths ...string) (*kapi.List, error) {
 
 	template, err := dockercompose.Generate(paths...)
 
@@ -27,42 +22,13 @@ func Transform(paths ...string) (*templateapi.Template, error) {
 		return nil, err
 	}
 
-	// Convert template objects to versioned objects
-	var convErr error
-	template.Objects, convErr = convertToVersion(template.Objects, "v1")
-	if convErr != nil {
-		panic(convErr)
-	}
+	list := ConvertToList(template)
 
-	return template, err
+	return list, err
 }
 
-// Print openshift template
-func Print(template *templateapi.Template) {
-	// make it List instead of Template
+// Convert OpenShift Template to Kubernetes List
+func ConvertToList(template *templateapi.Template) *kapi.List {
 	list := &kapi.List{Items: template.Objects}
-
-	printer, _, _err := kubectl.GetPrinter("yaml", "")
-	if _err != nil {
-		panic(_err)
-	}
-	version := unversioned.GroupVersion{Group: "", Version: "v1"}
-	printer = kubectl.NewVersionedPrinter(printer, kapi.Scheme, version)
-	printer.PrintObj(list, os.Stdout)
-}
-
-func convertToVersion(objs []runtime.Object, version string) ([]runtime.Object, error) {
-	ret := []runtime.Object{}
-
-	for _, obj := range objs {
-
-		convertedObject, err := kapi.Scheme.ConvertToVersion(obj, version)
-		if err != nil {
-			return nil, err
-		}
-
-		ret = append(ret, convertedObject)
-	}
-
-	return ret, nil
+	return list
 }
