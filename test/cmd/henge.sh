@@ -16,11 +16,11 @@ function initTmp(){
 
 # Utility function compere actual henge output with expected output
 function compereOutput(){
-    local provider=${1}
+    local target=${1}
     local dockerComposeFile=${2}
     local expectedOutput=${3}
-    henge -provider ${provider} ${dockerComposeFile} > ${TMP_DIR}/compereOutput
-    
+    henge -target ${target} ${dockerComposeFile} > ${TMP_DIR}/compereOutput
+
     # skip ref,secret,uri field  - they are different every time
     diff --suppress-common-lines -y ${TMP_DIR}/compereOutput ${expectedOutput} \
         | grep -vE "ref\:|secret|uri\:" | tee ${TMP_STDOUT}
@@ -35,9 +35,9 @@ function compereOutput(){
 function runTests() {
     local failedTests=""
     #get all function names that are begginig with "test_"
-    for testFce in $(declare -F | cut -f 3 -d ' ' | grep  -E "^test_");do 
+    for testFce in $(declare -F | cut -f 3 -d ' ' | grep  -E "^test_");do
         echo "* Running ${testFce}"
-        eval ${testFce} 2>$TMP_STDERR >$TMP_STDOUT 
+        eval ${testFce} 2>$TMP_STDERR >$TMP_STDOUT
         local exit_code=$?
         if [[ $exit_code -ne 0 ]]; then
             failedTests="${failedTests} ${testFce}"
@@ -65,7 +65,7 @@ function runTests() {
 
 # regular henge run, verify right exit code
 function test_exitCodeSuccess() {
-   henge -provider openshift ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+   henge -target openshift ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
     local exit_code=$?
     if [[ "${exit_code}" -eq "0" ]]; then
         return 0
@@ -76,7 +76,7 @@ function test_exitCodeSuccess() {
 
 # test right exit code when compose file doesn't exist
 function test_fileNotExist(){
-    henge -provider openshift nonexiting_file
+    henge -target openshift nonexiting_file
     local exit_code=$?
     if [[ "${exit_code}" -ne "0" ]]; then
         return 0
@@ -85,9 +85,9 @@ function test_fileNotExist(){
     fi
 }
 
-# test right exit for not supported provider
-function test_providerNotSupported(){
-    henge -provider nonexisting ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+# test right exit for not supported target
+function test_targetNotSupported(){
+    henge -target nonexisting ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
     local exit_code=$?
     if [[ "${exit_code}" -ne "0" ]]; then
         return 0
@@ -96,9 +96,9 @@ function test_providerNotSupported(){
     fi
 }
 
-# test right exit code when non existing provider
-function test_nonExistigProvider(){
-    henge -provider nonexisting ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+# test right exit code when non existing target
+function test_nonExistigtarget(){
+    henge -target nonexisting ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
     local exit_code=$?
     if [[ "${exit_code}" -ne "0" ]]; then
         return 0
@@ -124,4 +124,3 @@ function test_wordpressKubernetes(){
 
 initTmp
 runTests
-

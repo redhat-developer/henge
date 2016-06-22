@@ -13,7 +13,7 @@ Project goals:
 ### Example
 ```
 # This takes a Docker compose spec file and prints generated OpenShift artifacts
-henge -provider openshift compose.yml
+henge -target openshift compose.yml
 ```
 
 
@@ -57,6 +57,5 @@ GO15VENDOREXPERIMENT=1 go build henge.go
 ### Debug
 You can run henge with verbose logging by adding `-v 5` option
 ```
-./henge -v 5 -provider openshift docker-compose.yml
+./henge -v 5 -target openshift docker-compose.yml
 ```
-
