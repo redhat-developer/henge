@@ -24,12 +24,12 @@ func ifFileExists(files []string) error {
 }
 
 func main() {
-	provider := flag.String("provider", "", "Target provider")
+	provider := flag.String("target", "", "Target platform (openshift or kubernetes)")
 
 	flag.Parse()
 
 	if *provider == "" {
-		fmt.Fprintln(os.Stderr, "No provider specified")
+		fmt.Fprintln(os.Stderr, "You must provide target platform using -platform argument.")
 		os.Exit(1)
 	}
 
