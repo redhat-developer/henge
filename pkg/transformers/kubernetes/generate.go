@@ -17,11 +17,13 @@ import (
 
 	"github.com/openshift/origin/pkg/generate/app"
 	"github.com/openshift/origin/third_party/github.com/docker/libcompose/project"
+
+	"github.com/redhat-developer/henge/pkg/utils"
 )
 
 // Generate accepts a set of Docker compose project paths and converts them in an
 // Kubernetes List.
-func Generate(paths ...string) (*kapi.List, error) {
+func Generate(interactive bool, paths ...string) (*kapi.List, error) {
 	for i := range paths {
 		path, err := filepath.Abs(paths[i])
 		if err != nil {
@@ -40,6 +42,9 @@ func Generate(paths ...string) (*kapi.List, error) {
 	p := project.NewProject(context)
 	if err := p.Parse(); err != nil {
 		return nil, err
+	}
+	if interactive {
+		utils.AskForData(p.Configs)
 	}
 	list := &kapi.List{}
 

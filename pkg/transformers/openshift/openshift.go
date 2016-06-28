@@ -3,7 +3,6 @@ package openshift
 import (
 	kapi "k8s.io/kubernetes/pkg/api"
 
-	"github.com/openshift/origin/pkg/generate/dockercompose"
 	templateapi "github.com/openshift/origin/pkg/template/api"
 
 	// Install OpenShift APIs
@@ -14,9 +13,9 @@ import (
 	_ "github.com/openshift/origin/pkg/template/api/install"
 )
 
-func Transform(paths ...string) (*kapi.List, error) {
+func Transform(interactive bool, paths ...string) (*kapi.List, error) {
 
-	template, err := dockercompose.Generate(paths...)
+	template, err := Generate(interactive, paths...)
 
 	if err != nil {
 		return nil, err

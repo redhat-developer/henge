@@ -9,17 +9,17 @@ import (
 
 // Transform transforms the given project into artifacts for the specified
 // provider
-func Transform(provider string, paths ...string) error {
+func Transform(provider string, interactive bool, paths ...string) error {
 	switch provider {
 	case "openshift":
-		list, err := openshift.Transform(paths...)
+		list, err := openshift.Transform(interactive, paths...)
 		if err != nil {
 			return err
 		}
 		kubernetes.PrintList(list)
 		return nil
 	case "kubernetes":
-		list, err := kubernetes.Transform(paths...)
+		list, err := kubernetes.Transform(interactive, paths...)
 		if err != nil {
 			return err
 		}
