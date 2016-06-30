@@ -8,9 +8,9 @@ import (
 )
 
 // Transform transforms the given project into artifacts for the specified
-// provider
-func Transform(provider string, interactive bool, paths ...string) error {
-	switch provider {
+// orchestration provider
+func Transform(target string, interactive bool, paths ...string) error {
+	switch target {
 	case "openshift":
 		list, err := openshift.Transform(interactive, paths...)
 		if err != nil {
