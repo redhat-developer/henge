@@ -6,22 +6,8 @@ import (
 	"os"
 
 	"github.com/redhat-developer/henge/pkg/transformers"
+	"github.com/redhat-developer/henge/pkg/utils"
 )
-
-// Loop over a array of filepaths and check if it exists
-// if it exists check if it is not a directory.
-func ifFileExists(files []string) error {
-	for _, filename := range files {
-		fileInfo, err := os.Stat(filename)
-		if err != nil {
-			return fmt.Errorf("main: file %q not found", filename)
-		}
-		if fileInfo.IsDir() {
-			return fmt.Errorf("main: %q is a directory", filename)
-		}
-	}
-	return nil
-}
 
 func main() {
 	target := flag.String("target", "", "Target platform (openshift or kubernetes)")
@@ -35,7 +21,7 @@ func main() {
 	}
 
 	files := flag.Args()
-	err := ifFileExists(files)
+	err := utils.CheckIfFileExists(files)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)

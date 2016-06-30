@@ -7,6 +7,20 @@ import (
 	"github.com/openshift/origin/third_party/github.com/docker/libcompose/project"
 )
 
+// CheckIfFileExists checks if all files in array exists and that they are files (not directories).
+func CheckIfFileExists(files []string) error {
+	for _, filename := range files {
+		fileInfo, err := os.Stat(filename)
+		if err != nil {
+			return fmt.Errorf("file %q not found", filename)
+		}
+		if fileInfo.IsDir() {
+			return fmt.Errorf("%q is a directory", filename)
+		}
+	}
+	return nil
+}
+
 func getInput(prompt string) (response string) {
 	fmt.Fprintf(os.Stdout, prompt)
 	fmt.Scanf("%s", &response)
