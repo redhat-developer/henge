@@ -24,12 +24,12 @@ func ifFileExists(files []string) error {
 }
 
 func main() {
-	provider := flag.String("target", "", "Target platform (openshift or kubernetes)")
+	target := flag.String("target", "", "Target platform (openshift or kubernetes)")
 	interactive := flag.Bool("interactive", false, "Ask questions about missing arguments.")
 
 	flag.Parse()
 
-	if *provider == "" {
+	if *target == "" {
 		fmt.Fprintln(os.Stderr, "You must provide target platform using -target argument.")
 		os.Exit(1)
 	}
@@ -41,7 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = transformers.Transform(*provider, *interactive, flag.Args()[0:]...)
+	err = transformers.Transform(*target, *interactive, flag.Args()[0:]...)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
