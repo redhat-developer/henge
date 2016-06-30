@@ -9,8 +9,8 @@ import (
 	"k8s.io/kubernetes/pkg/runtime"
 )
 
-func Transform(paths ...string) (*kapi.List, error) {
-	list, err := Generate(paths...)
+func Transform(interactive bool, paths ...string) (*kapi.List, error) {
+	list, err := Generate(interactive, paths...)
 	return list, err
 }
 
