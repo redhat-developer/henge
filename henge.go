@@ -30,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	if *provider == "" {
-		fmt.Fprintln(os.Stderr, "You must provide target platform using -platform argument.")
+		fmt.Fprintln(os.Stderr, "You must provide target platform using -target argument.")
 		os.Exit(1)
 	}
 
