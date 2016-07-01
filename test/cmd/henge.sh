@@ -19,7 +19,7 @@ function compereOutput(){
     local target=${1}
     local dockerComposeFile=${2}
     local expectedOutput=${3}
-    henge -target ${target} ${dockerComposeFile} > ${TMP_DIR}/compereOutput
+    henge ${target} -f ${dockerComposeFile} > ${TMP_DIR}/compereOutput
 
     # skip ref,secret,uri field  - they are different every time
     diff --suppress-common-lines -y ${TMP_DIR}/compereOutput ${expectedOutput} \
@@ -65,7 +65,7 @@ function runTests() {
 
 # regular henge run, verify right exit code
 function test_exitCodeSuccess() {
-   henge -target openshift ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+   henge openshift -f ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
     local exit_code=$?
     if [[ "${exit_code}" -eq "0" ]]; then
         return 0
@@ -76,7 +76,7 @@ function test_exitCodeSuccess() {
 
 # test right exit code when compose file doesn't exist
 function test_fileNotExist(){
-    henge -target openshift nonexiting_file
+    henge openshift -f nonexiting_file
     local exit_code=$?
     if [[ "${exit_code}" -ne "0" ]]; then
         return 0
@@ -87,7 +87,7 @@ function test_fileNotExist(){
 
 # test right exit for not supported target
 function test_targetNotSupported(){
-    henge -target nonexisting ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+    henge nonexisting -f ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
     local exit_code=$?
     if [[ "${exit_code}" -ne "0" ]]; then
         return 0
@@ -98,7 +98,7 @@ function test_targetNotSupported(){
 
 # test right exit code when non existing target
 function test_nonExistigtarget(){
-    henge -target nonexisting ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
+    henge nonexisting -f ${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml
     local exit_code=$?
     if [[ "${exit_code}" -ne "0" ]]; then
         return 0

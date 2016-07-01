@@ -1,33 +1,31 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
+	"github.com/redhat-developer/henge/pkg/cmd"
 	"github.com/redhat-developer/henge/pkg/transformers"
 	"github.com/redhat-developer/henge/pkg/utils"
 )
 
 func main() {
-	target := flag.String("target", "", "Target platform (openshift or kubernetes)")
-	interactive := flag.Bool("interactive", false, "Ask questions about missing arguments.")
-
-	flag.Parse()
-
-	if *target == "" {
-		fmt.Fprintln(os.Stderr, "You must provide target platform using -target argument.")
+	// parse all command line args
+	vals, err := cmd.Execute()
+	if err != nil {
+		//fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
-	files := flag.Args()
-	err := utils.CheckIfFileExists(files)
+	// check if files exists
+	err = utils.CheckIfFileExists(vals.Files)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
-	err = transformers.Transform(*target, *interactive, flag.Args()[0:]...)
+	// make conversion
+	err = transformers.Transform(vals.Target, vals.Interactive, vals.Files...)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
