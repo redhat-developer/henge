@@ -10,11 +10,31 @@ Project goals:
 
 ## Usage
 
-### Example
+### Examples
+
+To convert the docker-compose.yml file in the current directory to openshift's artifacts
 ```
-# This takes a Docker compose spec file and prints generated OpenShift artifacts
-henge -target openshift compose.yml
+henge openshift
 ```
+
+To convert the file of your choice to kubernetes's artifacts.
+```
+henge kubernetes -f foo.yml
+```
+
+To convert docker-compose.yml file in current directory and also ask questions interactively.
+
+```
+henge openshift -i
+```
+
+To provide multiple file for conversion
+```
+henge kubernetes -f foo.yml,bar.yml,docker-compose.yml
+```
+
+
+
 
 
 ## Developing and building from source
@@ -57,5 +77,5 @@ GO15VENDOREXPERIMENT=1 go build henge.go
 ### Debug
 You can run henge with verbose logging by adding `-v 5` option
 ```
-./henge -v 5 -target openshift docker-compose.yml
+./henge --loglevel=5 openshift -f docker-compose.yml
 ```
