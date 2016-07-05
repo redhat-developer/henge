@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// make conversion
-	err = transformers.Transform(vals.Target, vals.Interactive, vals.Files...)
+	err = transformers.Transform(vals)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)

@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+
+	"github.com/redhat-developer/henge/pkg/types"
 	"github.com/redhat-developer/henge/pkg/utils"
 
 	kapi "k8s.io/kubernetes/pkg/api"
@@ -34,13 +36,14 @@ func IsPossibleDockerCompose(path string) bool {
 
 // Generate accepts a set of Docker compose project paths and converts them in an
 // OpenShift template definition.
-func Generate(interactive bool, paths ...string) (*templateapi.Template, error) {
-	for i := range paths {
-		path, err := filepath.Abs(paths[i])
+func Generate(vals *types.CmdValues) (*templateapi.Template, error) {
+	var paths []string
+	for _, file := range vals.Files {
+		path, err := filepath.Abs(file)
 		if err != nil {
 			return nil, err
 		}
-		paths[i] = path
+		paths = append(paths, path)
 	}
 	var bases []string
 	for _, s := range paths {
@@ -54,7 +57,7 @@ func Generate(interactive bool, paths ...string) (*templateapi.Template, error) 
 	if err := p.Parse(); err != nil {
 		return nil, err
 	}
-	if interactive {
+	if vals.Interactive {
 		utils.AskForData(p.Configs)
 	}
 	template := &templateapi.Template{}
