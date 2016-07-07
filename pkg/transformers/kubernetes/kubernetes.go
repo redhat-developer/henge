@@ -3,14 +3,16 @@ package kubernetes
 import (
 	"os"
 
+	"github.com/redhat-developer/henge/pkg/types"
+
 	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/kubectl"
 	"k8s.io/kubernetes/pkg/runtime"
 )
 
-func Transform(interactive bool, paths ...string) (*kapi.List, error) {
-	list, err := Generate(interactive, paths...)
+func Transform(vals *types.CmdValues) (*kapi.List, error) {
+	list, err := Generate(vals)
 	return list, err
 }
 

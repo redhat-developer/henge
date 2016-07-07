@@ -1,6 +1,8 @@
 package openshift
 
 import (
+	"github.com/redhat-developer/henge/pkg/types"
+
 	kapi "k8s.io/kubernetes/pkg/api"
 
 	templateapi "github.com/openshift/origin/pkg/template/api"
@@ -13,9 +15,9 @@ import (
 	_ "github.com/openshift/origin/pkg/template/api/install"
 )
 
-func Transform(interactive bool, paths ...string) (*kapi.List, error) {
+func Transform(vals *types.CmdValues) (*kapi.List, error) {
 
-	template, err := Generate(interactive, paths...)
+	template, err := Generate(vals)
 
 	if err != nil {
 		return nil, err

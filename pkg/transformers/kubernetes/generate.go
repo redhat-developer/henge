@@ -9,6 +9,8 @@ import (
 
 	"github.com/golang/glog"
 
+	"github.com/redhat-developer/henge/pkg/types"
+
 	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/runtime"
@@ -23,13 +25,14 @@ import (
 
 // Generate accepts a set of Docker compose project paths and converts them in an
 // Kubernetes List.
-func Generate(interactive bool, paths ...string) (*kapi.List, error) {
-	for i := range paths {
-		path, err := filepath.Abs(paths[i])
+func Generate(vals *types.CmdValues) (*kapi.List, error) {
+	var paths []string
+	for _, file := range vals.Files {
+		path, err := filepath.Abs(file)
 		if err != nil {
 			return nil, err
 		}
-		paths[i] = path
+		paths = append(paths, path)
 	}
 	var bases []string
 	for _, s := range paths {
@@ -43,7 +46,7 @@ func Generate(interactive bool, paths ...string) (*kapi.List, error) {
 	if err := p.Parse(); err != nil {
 		return nil, err
 	}
-	if interactive {
+	if vals.Interactive {
 		utils.AskForData(p.Configs)
 	}
 	list := &kapi.List{}
