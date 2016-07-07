@@ -18,14 +18,20 @@ func Transform(vals *types.CmdValues) error {
 		if err != nil {
 			return err
 		}
-		kubernetes.PrintList(list)
+		err = kubernetes.PrintList(list, vals)
+		if err != nil {
+			return err
+		}
 		return nil
 	case "kubernetes":
 		list, err := kubernetes.Transform(vals)
 		if err != nil {
 			return err
 		}
-		kubernetes.PrintList(list)
+		err = kubernetes.PrintList(list, vals)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 	err := fmt.Errorf("Provider not supported")

@@ -5,4 +5,5 @@ type CmdValues struct {
 	Interactive bool
 	Files       []string
 	Loglevel    int
+	OutputFile  string
 }
