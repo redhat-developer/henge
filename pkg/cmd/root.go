@@ -50,6 +50,7 @@ func Execute() (*types.CmdValues, error) {
 	RootCmd.Flags().BoolVarP(&val.Interactive, "interactive", "i", false, "Ask questions about values that can affect conversion.")
 	RootCmd.Flags().StringSliceVarP(&val.Files, "files", "f", []string{"docker-compose.yml"}, "Provide docker-compose files, comma separated.")
 	RootCmd.Flags().IntVarP(&val.Loglevel, "loglevel", "", 0, "Log level to show.")
+	RootCmd.Flags().StringVarP(&val.OutputFile, "output-file", "o", "", "File to save converted artifacts.")
 
 	if err := RootCmd.Execute(); err != nil {
 		return nil, err

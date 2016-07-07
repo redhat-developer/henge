@@ -32,8 +32,9 @@ func ConvertToVersion(objs []runtime.Object, version string) ([]runtime.Object, 
 	return ret, nil
 }
 
-//Display List in Yaml format on stdout
-func PrintList(list *kapi.List) {
+// PrintList will either print List in Yaml format to stdout or
+// a file, on the location given on commandline
+func PrintList(list *kapi.List, vals *types.CmdValues) error {
 	var convErr error
 	version := unversioned.GroupVersion{Group: "", Version: "v1"}
 
@@ -47,5 +48,18 @@ func PrintList(list *kapi.List) {
 		panic(err)
 	}
 	p = kubectl.NewVersionedPrinter(p, kapi.Scheme, version)
-	p.PrintObj(list, os.Stdout)
+
+	out := os.Stdout
+	if vals.OutputFile != "" {
+		f, err := os.Create(vals.OutputFile)
+		if err != nil {
+			return err
+		}
+		out = f
+		defer f.Close()
+	}
+	if err = p.PrintObj(list, out); err != nil {
+		return err
+	}
+	return nil
 }
