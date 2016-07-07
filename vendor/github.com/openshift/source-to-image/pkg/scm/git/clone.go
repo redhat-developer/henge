@@ -3,7 +3,6 @@ package git
 import (
 	"path/filepath"
 
-	"github.com/golang/glog"
 	"github.com/openshift/source-to-image/pkg/api"
 	"github.com/openshift/source-to-image/pkg/errors"
 	"github.com/openshift/source-to-image/pkg/util"
@@ -28,9 +27,9 @@ func (c *Clone) Download(config *api.Config) (*api.SourceInfo, error) {
 	if c.ValidCloneSpec(config.Source) {
 		if len(config.ContextDir) > 0 {
 			targetSourceDir = filepath.Join(config.WorkingDir, api.ContextTmp)
-			glog.Infof("Downloading %q (%q) ...", config.Source, config.ContextDir)
+			glog.V(1).Infof("Downloading %q (%q) ...", config.Source, config.ContextDir)
 		} else {
-			glog.Infof("Downloading %q ...", config.Source)
+			glog.V(1).Infof("Downloading %q ...", config.Source)
 		}
 
 		// If we have a specific checkout ref, use submodule update instead of recursive

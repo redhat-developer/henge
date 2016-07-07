@@ -8,10 +8,12 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/golang/glog"
+	utilglog "github.com/openshift/source-to-image/pkg/util/glog"
 
 	"github.com/openshift/source-to-image/pkg/errors"
 )
+
+var glog = utilglog.StderrLog
 
 // FileSystem allows STI to work with the file system and
 // perform tasks such as creating and deleting directories
@@ -91,18 +93,18 @@ func (h *fs) Copy(source string, dest string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer sourcefile.Close()
 	sourceinfo, err := os.Stat(source)
 	if err != nil {
 		return err
 	}
-	defer sourcefile.Close()
 
 	if sourceinfo.IsDir() {
 		glog.V(5).Infof("D %q -> %q", source, dest)
 		return h.CopyContents(source, dest)
 	}
 
-	destinfo, err := os.Stat(dest)
+	destinfo, _ := os.Stat(dest)
 	if destinfo != nil && destinfo.IsDir() {
 		return fmt.Errorf("destination must be full path to a file, not directory")
 	}

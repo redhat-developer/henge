@@ -172,7 +172,7 @@ type RollingDeploymentStrategyParams struct {
 	// interval. If nil, one replica will be scaled up and down each interval.
 	// If negative, the scale order will be down/up instead of up/down.
 	// DEPRECATED: Use MaxUnavailable/MaxSurge instead.
-	UpdatePercent *int
+	UpdatePercent *int32
 	// Pre is a lifecycle hook which is executed before the deployment process
 	// begins. All LifecycleHookFailurePolicy values are supported.
 	Pre *LifecycleHook
@@ -245,9 +245,6 @@ const (
 	// DeploymentReplicasAnnotation is for internal use only and is for
 	// detecting external modifications to deployment replica counts.
 	DeploymentReplicasAnnotation = "openshift.io/deployment.replicas"
-	// DeploymentInstantiatedAnnotation indicates that the deployment has been instantiated.
-	// The annotation value does not matter and its mere presence indicates instantiation.
-	DeploymentInstantiatedAnnotation = "openshift.io/deployment.instantiated"
 	// PostHookPodSuffix is the suffix added to all pre hook pods
 	PreHookPodSuffix = "hook-pre"
 	// PostHookPodSuffix is the suffix added to all mid hook pods
@@ -260,7 +257,7 @@ const (
 // or for a deployment being placed in a failed state
 const (
 	DeploymentCancelledByUser                 = "cancelled by the user"
-	DeploymentCancelledNewerDeploymentExists  = "cancelled as a newer deployment was found running"
+	DeploymentCancelledNewerDeploymentExists  = "newer deployment was found running"
 	DeploymentFailedUnrelatedDeploymentExists = "unrelated pod with the same name as this deployment is already running"
 	DeploymentFailedDeployerPodNoLongerExists = "deployer pod no longer exists"
 )
@@ -277,6 +274,8 @@ const DeploymentCancelledAnnotationValue = "true"
 // DeploymentInstantiatedAnnotationValue represents the value for the DeploymentInstantiatedAnnotation
 // annotation that signifies that the deployment should be instantiated.
 const DeploymentInstantiatedAnnotationValue = "true"
+
+// +genclient=true
 
 // DeploymentConfig represents a configuration for a single deployment (represented as a
 // ReplicationController). It also contains details about changes which resulted in the current
@@ -304,7 +303,7 @@ type DeploymentConfigSpec struct {
 	Triggers []DeploymentTriggerPolicy
 
 	// Replicas is the number of desired replicas.
-	Replicas int
+	Replicas int32
 
 	// Test ensures that this deployment config will have zero replicas except while a deployment is running. This allows the
 	// deployment config to be used as a continuous deployment test - triggering on images, running the deployment, and then succeeding
@@ -325,14 +324,23 @@ type DeploymentConfigSpec struct {
 
 // DeploymentConfigStatus represents the current deployment state.
 type DeploymentConfigStatus struct {
-	// LatestVersion is used to determine whether the current deployment associated with a DeploymentConfig
-	// is out of sync.
-	LatestVersion int
+	// LatestVersion is used to determine whether the current deployment associated with a deployment
+	// config is out of sync.
+	LatestVersion int64
+	// ObservedGeneration is the most recent generation observed by the deployment config controller.
+	ObservedGeneration int64
+	// Replicas is the total number of pods targeted by this deployment config.
+	Replicas int32
+	// UpdatedReplicas is the total number of non-terminated pods targeted by this deployment config
+	// that have the desired template spec.
+	UpdatedReplicas int32
+	// AvailableReplicas is the total number of available pods targeted by this deployment config.
+	AvailableReplicas int32
+	// UnavailableReplicas is the total number of unavailable pods targeted by this deployment config.
+	UnavailableReplicas int32
 	// Details are the reasons for the update to this deployment config.
 	// This could be based on a change made by the user or caused by an automatic trigger
 	Details *DeploymentDetails
-	// ObservedGeneration is the most recent generation observed by the controller.
-	ObservedGeneration int64
 }
 
 // DeploymentTriggerPolicy describes a policy for a single trigger that results in a new deployment.
@@ -409,6 +417,10 @@ type DeploymentConfigList struct {
 // DeploymentConfigRollback provides the input to rollback generation.
 type DeploymentConfigRollback struct {
 	unversioned.TypeMeta
+	// Name of the deployment config that will be rolled back.
+	Name string
+	// UpdatedAnnotations is a set of new annotations that will be added in the deployment config.
+	UpdatedAnnotations map[string]string
 	// Spec defines the options to rollback generation.
 	Spec DeploymentConfigRollbackSpec
 }
@@ -417,6 +429,8 @@ type DeploymentConfigRollback struct {
 type DeploymentConfigRollbackSpec struct {
 	// From points to a ReplicationController which is a deployment.
 	From kapi.ObjectReference
+	// Revision to rollback to. If set to 0, rollback to the last revision.
+	Revision int64
 	// IncludeTriggers specifies whether to include config Triggers.
 	IncludeTriggers bool
 	// IncludeTemplate specifies whether to include the PodTemplateSpec.
