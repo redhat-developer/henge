@@ -7,6 +7,10 @@ Project goals:
 - The tool can be used as a library or service with another front end e.g. oc, kubectl, a web app or an IDE.
 
 
+## Releases
+
+We don't have any releases yet.
+But if you don't want to compile henge yourself, you can download latest master build - [Henge master builds](https://www.dropbox.com/sh/lcz3o5o0i0gv6fw/AADMZrz7URk0R6qkKnyE7Hs7a?dl=0) 
 
 ## Usage
 
