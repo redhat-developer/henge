@@ -5,7 +5,7 @@ go:
     - 1.6
 
 install:
-    - go install 
+    - go install
 
 script:
     - test/cmd/henge.sh
