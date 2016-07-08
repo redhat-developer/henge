@@ -16,6 +16,8 @@ type ImageList struct {
 	Items []Image `json:"items"`
 }
 
+// +genclient=true
+
 // Image is an immutable representation of a Docker image and metadata at a point in time.
 type Image struct {
 	unversioned.TypeMeta `json:",inline"`
@@ -34,14 +36,22 @@ type Image struct {
 	DockerImageLayers []ImageLayer `json:"dockerImageLayers"`
 	// Signatures holds all signatures of the image.
 	Signatures []ImageSignature `json:"signatures,omitempty"`
+	// DockerImageSignatures provides the signatures as opaque blobs. This is a part of manifest schema v1.
+	DockerImageSignatures [][]byte `json:"dockerImageSignatures,omitempty"`
+	// DockerImageManifestMediaType specifies the mediaType of manifest. This is a part of manifest schema v2.
+	DockerImageManifestMediaType string `json:"dockerImageManifestMediaType,omitempty"`
+	// DockerImageConfig is a JSON blob that the runtime uses to set up the container. This is a part of manifest schema v2.
+	DockerImageConfig string `json:"dockerImageConfig,omitempty"`
 }
 
 // ImageLayer represents a single layer of the image. Some images may have multiple layers. Some may have none.
 type ImageLayer struct {
 	// Name of the layer as defined by the underlying store.
 	Name string `json:"name"`
-	// Size of the layer as defined by the underlying store.
-	Size int64 `json:"size"`
+	// Size of the layer in bytes as defined by the underlying store.
+	LayerSize int64 `json:"size"`
+	// MediaType of the referenced object.
+	MediaType string `json:"mediaType"`
 }
 
 // ImageSignature holds a signature of an image. It allows to verify image identity and possibly other claims

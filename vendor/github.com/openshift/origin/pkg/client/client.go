@@ -10,6 +10,7 @@ import (
 	kapi "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/errors"
 	"k8s.io/kubernetes/pkg/client/restclient"
+	"k8s.io/kubernetes/pkg/client/typed/discovery"
 
 	"github.com/openshift/origin/pkg/api/latest"
 	"github.com/openshift/origin/pkg/version"
@@ -59,6 +60,8 @@ type Interface interface {
 	ClusterPolicyBindingsInterface
 	ClusterRolesInterface
 	ClusterRoleBindingsInterface
+	ClusterResourceQuotasInterface
+	AppliedClusterResourceQuotasNamespacer
 }
 
 // Builds provides a REST client for Builds
@@ -262,6 +265,14 @@ func (c *Client) ClusterRoleBindings() ClusterRoleBindingInterface {
 	return newClusterRoleBindings(c)
 }
 
+func (c *Client) ClusterResourceQuotas() ClusterResourceQuotaInterface {
+	return newClusterResourceQuotas(c)
+}
+
+func (c *Client) AppliedClusterResourceQuotas(namespace string) AppliedClusterResourceQuotaInterface {
+	return newAppliedClusterResourceQuotas(c, namespace)
+}
+
 // Client is an OpenShift client object
 type Client struct {
 	*restclient.RESTClient
@@ -283,6 +294,12 @@ func New(c *restclient.Config) (*Client, error) {
 	return &Client{client}, nil
 }
 
+// DiscoveryClient returns a discovery client.
+func (c *Client) Discovery() discovery.DiscoveryInterface {
+	d := NewDiscoveryClient(c.RESTClient)
+	return d
+}
+
 // SetOpenShiftDefaults sets the default settings on the passed
 // client configuration
 func SetOpenShiftDefaults(config *restclient.Config) error {
@@ -302,6 +319,9 @@ func SetOpenShiftDefaults(config *restclient.Config) error {
 	// if err != nil {
 	// 	return fmt.Errorf("API group %q is not recognized (valid values: %v)", config.GroupVersion.Group, latest.Versions)
 	// }
+	if config.NegotiatedSerializer == nil {
+		config.NegotiatedSerializer = kapi.Codecs
+	}
 
 	if config.Codec == nil {
 		config.Codec = kapi.Codecs.LegacyCodec(*config.GroupVersion)

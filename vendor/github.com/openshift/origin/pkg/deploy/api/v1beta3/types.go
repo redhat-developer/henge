@@ -175,7 +175,7 @@ type RollingDeploymentStrategyParams struct {
 	// interval. If nil, one replica will be scaled up and down each interval.
 	// If negative, the scale order will be down/up instead of up/down.
 	// DEPRECATED: Use MaxUnavailable/MaxSurge instead.
-	UpdatePercent *int `json:"updatePercent,omitempty"`
+	UpdatePercent *int32 `json:"updatePercent,omitempty"`
 	// Pre is a lifecycle hook which is executed before the deployment process
 	// begins. All LifecycleHookFailurePolicy values are supported.
 	Pre *LifecycleHook `json:"pre,omitempty"`
@@ -277,7 +277,7 @@ type DeploymentConfigSpec struct {
 	Triggers []DeploymentTriggerPolicy `json:"triggers,omitempty"`
 
 	// Replicas is the number of desired replicas.
-	Replicas int `json:"replicas"`
+	Replicas int32 `json:"replicas"`
 
 	// Test ensures that this deployment config will have zero replicas except while a deployment is running. This allows the
 	// deployment config to be used as a continuous deployment test - triggering on images, running the deployment, and then succeeding
@@ -297,14 +297,23 @@ type DeploymentConfigSpec struct {
 }
 
 type DeploymentConfigStatus struct {
-	// LatestVersion is used to determine whether the current deployment associated with a DeploymentConfig
-	// is out of sync.
-	LatestVersion int `json:"latestVersion,omitempty"`
+	// LatestVersion is used to determine whether the current deployment associated with a deployment
+	// config is out of sync.
+	LatestVersion int64 `json:"latestVersion,omitempty"`
+	// ObservedGeneration is the most recent generation observed by the deployment config controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	// Replicas is the total number of pods targeted by this deployment config.
+	Replicas int32 `json:"replicas,omitempty"`
+	// UpdatedReplicas is the total number of non-terminated pods targeted by this deployment config
+	// that have the desired template spec.
+	UpdatedReplicas int32 `json:"updatedReplicas,omitempty"`
+	// AvailableReplicas is the total number of available pods targeted by this deployment config.
+	AvailableReplicas int32 `json:"availableReplicas,omitempty"`
+	// UnavailableReplicas is the total number of unavailable pods targeted by this deployment config.
+	UnavailableReplicas int32 `json:"unavailableReplicas,omitempty"`
 	// The reasons for the update to this deployment config.
 	// This could be based on a change made by the user or caused by an automatic trigger
 	Details *DeploymentDetails `json:"details,omitempty"`
-	// ObservedGeneration is the most recent generation observed by the controller.
-	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // DeploymentTriggerPolicy describes a policy for a single trigger that results in a new deployment.
@@ -377,6 +386,10 @@ type DeploymentConfigList struct {
 // DeploymentConfigRollback provides the input to rollback generation.
 type DeploymentConfigRollback struct {
 	unversioned.TypeMeta `json:",inline"`
+	// Name of the deployment config that will be rolled back.
+	Name string `json:"name"`
+	// UpdatedAnnotations is a set of new annotations that will be added in the deployment config.
+	UpdatedAnnotations map[string]string `json:"updatedAnnotations,omitempty"`
 	// Spec defines the options to rollback generation.
 	Spec DeploymentConfigRollbackSpec `json:"spec"`
 }
@@ -385,6 +398,8 @@ type DeploymentConfigRollback struct {
 type DeploymentConfigRollbackSpec struct {
 	// From points to a ReplicationController which is a deployment.
 	From kapi.ObjectReference `json:"from"`
+	// Revision to rollback to. If set to 0, rollback to the last revision.
+	Revision int64 `json:"revision,omitempty"`
 	// IncludeTriggers specifies whether to include config Triggers.
 	IncludeTriggers bool `json:"includeTriggers"`
 	// IncludeTemplate specifies whether to include the PodTemplateSpec.

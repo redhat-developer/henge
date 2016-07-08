@@ -43,7 +43,7 @@ var DiscoveryRule = PolicyRule{
 	Verbs: sets.NewString("get"),
 	NonResourceURLs: sets.NewString(
 		// Server version checking
-		"/version",
+		"/version", "/version/*",
 
 		// API discovery/negotiation
 		"/api", "/api/*",
@@ -104,6 +104,8 @@ type RoleBinding struct {
 	// Since Policy is a singleton, this is sufficient knowledge to locate a role
 	RoleRef kapi.ObjectReference
 }
+
+// +genclient=true
 
 // Policy is a object that holds all the Roles for a particular namespace.  There is at most
 // one Policy document per namespace.

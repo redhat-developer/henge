@@ -48,6 +48,8 @@ const (
 	BuildConfigPausedAnnotation = "openshift.io/build-config.paused"
 )
 
+// +genclient=true
+
 // Build encapsulates the inputs needed to produce a new deployable image, as well as
 // the status of the execution and a reference to the Pod which executed the build.
 type Build struct {
@@ -259,6 +261,11 @@ const (
 	// StatusReasonExceededRetryTimeout is an error condition when the build has
 	// not completed and retrying the build times out.
 	StatusReasonExceededRetryTimeout = "ExceededRetryTimeout"
+
+	// StatusReasonMissingPushSecret indicates that the build is missing required
+	// secret for pushing the output image.
+	// The build will stay in the pending state until the secret is created, or the build times out.
+	StatusReasonMissingPushSecret = "MissingPushSecret"
 )
 
 // BuildSource is the input used for the build.
@@ -677,7 +684,7 @@ const (
 // BuildConfigStatus contains current state of the build config object.
 type BuildConfigStatus struct {
 	// LastVersion is used to inform about number of last triggered build.
-	LastVersion int
+	LastVersion int64
 }
 
 // WebHookTrigger is a trigger that gets invoked using a webhook type of post
@@ -821,7 +828,7 @@ type BuildRequest struct {
 	// LastVersion (optional) is the LastVersion of the BuildConfig that was used
 	// to generate the build. If the BuildConfig in the generator doesn't match,
 	// a build will not be generated.
-	LastVersion *int
+	LastVersion *int64
 
 	// Env contains additional environment variables you want to pass into a builder container.
 	Env []kapi.EnvVar

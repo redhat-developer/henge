@@ -57,8 +57,10 @@ func (DeploymentConfigList) SwaggerDoc() map[string]string {
 }
 
 var map_DeploymentConfigRollback = map[string]string{
-	"":     "DeploymentConfigRollback provides the input to rollback generation.",
-	"spec": "Spec defines the options to rollback generation.",
+	"":                   "DeploymentConfigRollback provides the input to rollback generation.",
+	"name":               "Name of the deployment config that will be rolled back.",
+	"updatedAnnotations": "UpdatedAnnotations is a set of new annotations that will be added in the deployment config.",
+	"spec":               "Spec defines the options to rollback generation.",
 }
 
 func (DeploymentConfigRollback) SwaggerDoc() map[string]string {
@@ -68,6 +70,7 @@ func (DeploymentConfigRollback) SwaggerDoc() map[string]string {
 var map_DeploymentConfigRollbackSpec = map[string]string{
 	"":                       "DeploymentConfigRollbackSpec represents the options for rollback generation.",
 	"from":                   "From points to a ReplicationController which is a deployment.",
+	"revision":               "Revision to rollback to. If set to 0, rollback to the last revision.",
 	"includeTriggers":        "IncludeTriggers specifies whether to include config Triggers.",
 	"includeTemplate":        "IncludeTemplate specifies whether to include the PodTemplateSpec.",
 	"includeReplicationMeta": "IncludeReplicationMeta specifies whether to include the replica count and selector.",
@@ -94,10 +97,14 @@ func (DeploymentConfigSpec) SwaggerDoc() map[string]string {
 }
 
 var map_DeploymentConfigStatus = map[string]string{
-	"":                   "DeploymentConfigStatus represents the current deployment state.",
-	"latestVersion":      "LatestVersion is used to determine whether the current deployment associated with a DeploymentConfig is out of sync.",
-	"details":            "Details are the reasons for the update to this deployment config. This could be based on a change made by the user or caused by an automatic trigger",
-	"observedGeneration": "ObservedGeneration is the most recent generation observed by the controller.",
+	"":                    "DeploymentConfigStatus represents the current deployment state.",
+	"latestVersion":       "LatestVersion is used to determine whether the current deployment associated with a deployment config is out of sync.",
+	"observedGeneration":  "ObservedGeneration is the most recent generation observed by the deployment config controller.",
+	"replicas":            "Replicas is the total number of pods targeted by this deployment config.",
+	"updatedReplicas":     "UpdatedReplicas is the total number of non-terminated pods targeted by this deployment config that have the desired template spec.",
+	"availableReplicas":   "AvailableReplicas is the total number of available pods targeted by this deployment config.",
+	"unavailableReplicas": "UnavailableReplicas is the total number of unavailable pods targeted by this deployment config.",
+	"details":             "Details are the reasons for the update to this deployment config. This could be based on a change made by the user or caused by an automatic trigger",
 }
 
 func (DeploymentConfigStatus) SwaggerDoc() map[string]string {

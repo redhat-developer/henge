@@ -126,6 +126,16 @@ func DeepCopy_api_DeploymentConfigRollback(in DeploymentConfigRollback, out *Dep
 	if err := unversioned.DeepCopy_unversioned_TypeMeta(in.TypeMeta, &out.TypeMeta, c); err != nil {
 		return err
 	}
+	out.Name = in.Name
+	if in.UpdatedAnnotations != nil {
+		in, out := in.UpdatedAnnotations, &out.UpdatedAnnotations
+		*out = make(map[string]string)
+		for key, val := range in {
+			(*out)[key] = val
+		}
+	} else {
+		out.UpdatedAnnotations = nil
+	}
 	if err := DeepCopy_api_DeploymentConfigRollbackSpec(in.Spec, &out.Spec, c); err != nil {
 		return err
 	}
@@ -136,6 +146,7 @@ func DeepCopy_api_DeploymentConfigRollbackSpec(in DeploymentConfigRollbackSpec, 
 	if err := api.DeepCopy_api_ObjectReference(in.From, &out.From, c); err != nil {
 		return err
 	}
+	out.Revision = in.Revision
 	out.IncludeTriggers = in.IncludeTriggers
 	out.IncludeTemplate = in.IncludeTemplate
 	out.IncludeReplicationMeta = in.IncludeReplicationMeta
@@ -184,6 +195,11 @@ func DeepCopy_api_DeploymentConfigSpec(in DeploymentConfigSpec, out *DeploymentC
 
 func DeepCopy_api_DeploymentConfigStatus(in DeploymentConfigStatus, out *DeploymentConfigStatus, c *conversion.Cloner) error {
 	out.LatestVersion = in.LatestVersion
+	out.ObservedGeneration = in.ObservedGeneration
+	out.Replicas = in.Replicas
+	out.UpdatedReplicas = in.UpdatedReplicas
+	out.AvailableReplicas = in.AvailableReplicas
+	out.UnavailableReplicas = in.UnavailableReplicas
 	if in.Details != nil {
 		in, out := in.Details, &out.Details
 		*out = new(DeploymentDetails)
@@ -193,7 +209,6 @@ func DeepCopy_api_DeploymentConfigStatus(in DeploymentConfigStatus, out *Deploym
 	} else {
 		out.Details = nil
 	}
-	out.ObservedGeneration = in.ObservedGeneration
 	return nil
 }
 
@@ -475,7 +490,7 @@ func DeepCopy_api_RollingDeploymentStrategyParams(in RollingDeploymentStrategyPa
 	}
 	if in.UpdatePercent != nil {
 		in, out := in.UpdatePercent, &out.UpdatePercent
-		*out = new(int)
+		*out = new(int32)
 		**out = *in
 	} else {
 		out.UpdatePercent = nil
