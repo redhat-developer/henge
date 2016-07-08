@@ -1,4 +1,6 @@
 # Henge
+[![Build Status](https://travis-ci.org/redhat-developer/henge.svg?branch=master)](https://travis-ci.org/redhat-developer/henge)
+
 Convert multi-container application defined using Docker Compose to Kubernetes and/or Openshift.
 
 Project goals:
