@@ -14,12 +14,18 @@ func openshiftCmd(vals *types.CmdValues) *cobra.Command {
 		Use:   "openshift",
 		Short: "convert to OpenShift artifacts",
 		Long:  "To convert the docker-compose.yml file in the current directory to openshift's artifacts",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 
-			errorIfFileDoesNotExist(vals)
+			err := fileDefaultsAndSanity(vals)
+
+			if err != nil {
+				return err
+			}
 
 			list, err := openshift.Transform(vals)
 
+			// not returning err since cobra will print the cli
+			// help too, making the output convoluted
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(1)
@@ -30,6 +36,7 @@ func openshiftCmd(vals *types.CmdValues) *cobra.Command {
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(1)
 			}
+			return nil
 		},
 	}
 

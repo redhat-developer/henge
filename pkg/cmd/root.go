@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/redhat-developer/henge/pkg/types"
 	"github.com/redhat-developer/henge/pkg/utils"
-	"os"
 )
 
 const cliLong = `
@@ -57,15 +56,30 @@ func Execute() (*types.CmdValues, error) {
 
 func addProviderFlags(cmd *cobra.Command, vals *types.CmdValues) {
 
-	cmd.Flags().StringSliceVarP(&vals.Files, "files", "f", []string{"docker-compose.yml"}, "Provide docker-compose files, comma separated.")
+	cmd.Flags().StringSliceVarP(&vals.Files, "files", "f", nil, "Provide comma separated docker-compose files. Default: 'docker-compose.yml' or 'docker-compose.yaml'")
 	cmd.Flags().StringVarP(&vals.OutputFile, "output-file", "o", "", "File to save converted artifacts.")
 }
 
-func errorIfFileDoesNotExist(val *types.CmdValues) {
+func fileDefaultsAndSanity(val *types.CmdValues) error {
 	// check if files exists
-	err := utils.CheckIfFileExists(val.Files)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+
+	if val.Files == nil {
+		val.Files = []string{"docker-compose.yml"}
+		err := utils.CheckIfFileExists(val.Files)
+
+		if err == nil {
+			return nil
+		}
+
+		val.Files = []string{"docker-compose.yaml"}
+		err = utils.CheckIfFileExists(val.Files)
+
+		if err == nil {
+			return nil
+		}
+
+		return fmt.Errorf("docker-compose.yml or docker-compose.yaml file not found\n")
 	}
+
+	return utils.CheckIfFileExists(val.Files)
 }

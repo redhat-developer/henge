@@ -13,9 +13,13 @@ func kubernetesCmd(vals *types.CmdValues) *cobra.Command {
 		Use:   "kubernetes",
 		Short: "convert to Kubernetes artifacts",
 		Long:  "To convert the docker-compose.yml file in the current directory to kubernetes' artifacts",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 
-			errorIfFileDoesNotExist(vals)
+			err := fileDefaultsAndSanity(vals)
+
+			if err != nil {
+				return err
+			}
 
 			list, err := kubernetes.Transform(vals)
 
@@ -29,6 +33,7 @@ func kubernetesCmd(vals *types.CmdValues) *cobra.Command {
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(1)
 			}
+			return nil
 		},
 	}
 
