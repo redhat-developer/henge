@@ -7,6 +7,18 @@ Project goals:
 - The tool can be used as a library or service with another front end e.g. oc, kubectl, a web app or an IDE.
 
 
+## Install
+
+To install, simply `go get` the package and henge will automatically install to your $GOPATH/bin.
+
+```
+go get github.com/redhat-developer/henge
+
+henge --help
+Henge takes a docker-compose.yml file and converts it into a openshift or kubernetes artifacts,
+which then can be used to deploy apps on that platforms.
+...
+```
 
 ## Usage
 
@@ -32,10 +44,6 @@ To provide multiple file for conversion
 ```
 henge kubernetes -f foo.yml,bar.yml,docker-compose.yml
 ```
-
-
-
-
 
 ## Developing and building from source
 
@@ -64,12 +72,12 @@ git remote add upstream https://github.com/redhat-developer/henge
 ### Build
 Check your Go version `go version`
 
-#### using Go v1.6
+#### Using Go v1.6
 ```
 go build henge.go
 ```
 
-#### using Go v1.5
+#### Using Go v1.5
 ```
 GO15VENDOREXPERIMENT=1 go build henge.go
 ```
