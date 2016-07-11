@@ -14,15 +14,15 @@ function initTmp(){
 }
 
 
-# Utility function compere actual henge output with expected output
-function compereOutput(){
+# Utility function compare actual henge output with expected output
+function compareOutput(){
     local target=${1}
     local dockerComposeFile=${2}
     local expectedOutput=${3}
-    henge ${target} -f ${dockerComposeFile} > ${TMP_DIR}/compereOutput
+    henge ${target} -f ${dockerComposeFile} > ${TMP_DIR}/compareOutput
 
     # skip ref,secret,uri field  - they are different every time
-    diff --suppress-common-lines -y ${TMP_DIR}/compereOutput ${expectedOutput} \
+    diff --suppress-common-lines -y ${TMP_DIR}/compareOutput ${expectedOutput} \
         | grep -vE "ref\:|secret|uri\:" | tee ${TMP_STDOUT}
     if [[ "$(cat ${TMP_STDOUT} | wc -l)" -ne "0" ]]; then
         return 1
@@ -110,14 +110,14 @@ function test_nonExistigtarget(){
 
 # check conversion for complex app to OpenShift
 function test_complexOpenshift(){
-    compereOutput "openshift" "${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml" "${HENGE_ROOT}/test/fixtures/complex/docker-compose.converted.yaml"
+    compareOutput "openshift" "${HENGE_ROOT}/test/fixtures/complex/docker-compose.yml" "${HENGE_ROOT}/test/fixtures/complex/docker-compose.converted.yaml"
     return $?
 }
 
 
 # check conversion for wordpress app to Kubernetes
 function test_wordpressKubernetes(){
-    compereOutput "kubernetes" "${HENGE_ROOT}/test/fixtures/wordpress/docker-compose.yml" "${HENGE_ROOT}/test/fixtures/wordpress/docker-compose.k8s.converted.yml"
+    compareOutput "kubernetes" "${HENGE_ROOT}/test/fixtures/wordpress/docker-compose.yml" "${HENGE_ROOT}/test/fixtures/wordpress/docker-compose.k8s.converted.yml"
     return $?
 }
 

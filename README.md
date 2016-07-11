@@ -87,3 +87,16 @@ You can run henge with verbose logging by adding `-v 5` option
 ```
 ./henge --loglevel=5 openshift -f docker-compose.yml
 ```
+
+
+### Tests
+
+#### Tests for command line interface
+
+Please make sure `henge` binary is in your $PATH.
+
+```
+export PATH=$GOPATH/src/github.com/redhat-developer/henge:$PATH
+cd tests/cmd
+./henge.sh
+```
