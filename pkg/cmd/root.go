@@ -58,7 +58,7 @@ func Execute() (*types.CmdValues, error) {
 func addProviderFlags(cmd *cobra.Command, vals *types.CmdValues) *cobra.Command {
 
 	cmd.Flags().StringSliceVarP(&vals.Files, "files", "f", []string{"docker-compose.yml"}, "Provide docker-compose files, comma separated.")
-	cmd.Flags().StringVarP(&vals.OutputFile, "output-file", "o", "", "File to save converted artifacts.")
+	cmd.Flags().StringVarP(&vals.OutputFile, "output", "o", "", "File to save converted artifacts.")
 
 	return cmd
 }
