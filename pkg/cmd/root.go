@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
+	"fmt"
 	"github.com/redhat-developer/henge/pkg/types"
+	"github.com/redhat-developer/henge/pkg/utils"
+	"os"
 )
 
 const cliLong = `
@@ -39,21 +40,34 @@ func Execute() (*types.CmdValues, error) {
 		Short:   "Henge converts the docker compose file to various orchestration providers' artifacts.",
 		Long:    cliLong,
 		Example: example,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return fmt.Errorf("Target not specified")
-			}
-			val.Target = args[0]
-			return nil
-		},
 	}
-	RootCmd.Flags().BoolVarP(&val.Interactive, "interactive", "i", false, "Ask questions about values that can affect conversion.")
-	RootCmd.Flags().StringSliceVarP(&val.Files, "files", "f", []string{"docker-compose.yml"}, "Provide docker-compose files, comma separated.")
-	RootCmd.Flags().IntVarP(&val.Loglevel, "loglevel", "", 0, "Log level to show.")
-	RootCmd.Flags().StringVarP(&val.OutputFile, "output-file", "o", "", "File to save converted artifacts.")
+
+	RootCmd.PersistentFlags().BoolVarP(&val.Interactive, "interactive", "i", false, "Ask questions about values that can affect conversion.")
+	RootCmd.PersistentFlags().IntVarP(&val.Loglevel, "loglevel", "", 0, "Log level to show.")
+
+	RootCmd.AddCommand(openshiftCmd(&val))
+	RootCmd.AddCommand(kubernetesCmd(&val))
 
 	if err := RootCmd.Execute(); err != nil {
 		return nil, err
 	}
+
 	return &val, nil
+}
+
+func addProviderFlags(cmd *cobra.Command, vals *types.CmdValues) *cobra.Command {
+
+	cmd.Flags().StringSliceVarP(&vals.Files, "files", "f", []string{"docker-compose.yml"}, "Provide docker-compose files, comma separated.")
+	cmd.Flags().StringVarP(&vals.OutputFile, "output-file", "o", "", "File to save converted artifacts.")
+
+	return cmd
+}
+
+func errorIfFileDoesNotExist(val *types.CmdValues) {
+	// check if files exists
+	err := utils.CheckIfFileExists(val.Files)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 }
