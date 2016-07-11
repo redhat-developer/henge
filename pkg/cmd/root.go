@@ -55,12 +55,10 @@ func Execute() (*types.CmdValues, error) {
 	return &val, nil
 }
 
-func addProviderFlags(cmd *cobra.Command, vals *types.CmdValues) *cobra.Command {
+func addProviderFlags(cmd *cobra.Command, vals *types.CmdValues) {
 
 	cmd.Flags().StringSliceVarP(&vals.Files, "files", "f", []string{"docker-compose.yml"}, "Provide docker-compose files, comma separated.")
 	cmd.Flags().StringVarP(&vals.OutputFile, "output-file", "o", "", "File to save converted artifacts.")
-
-	return cmd
 }
 
 func errorIfFileDoesNotExist(val *types.CmdValues) {
