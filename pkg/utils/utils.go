@@ -14,10 +14,10 @@ func CheckIfFileExists(files []string) error {
 	for _, filename := range files {
 		fileInfo, err := os.Stat(filename)
 		if err != nil {
-			return fmt.Errorf("file %q not found", filename)
+			return err
 		}
 		if fileInfo.IsDir() {
-			return fmt.Errorf("%q is a directory", filename)
+			return fmt.Errorf("%s: must be a file not a directory", filename)
 		}
 	}
 	return nil
