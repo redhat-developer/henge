@@ -33,6 +33,6 @@ func openshiftCmd(vals *types.CmdValues) *cobra.Command {
 		},
 	}
 
-	cmd = addProviderFlags(cmd, vals)
+	addProviderFlags(cmd, vals)
 	return cmd
 }
