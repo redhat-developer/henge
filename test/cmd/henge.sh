@@ -31,6 +31,20 @@ function compareOutput(){
     fi
 }
 
+function checkDefaultFiles(){
+    touch $2
+    henge $1
+
+    local exit_code=$?
+    rm -f $2
+
+    if [[ "${exit_code}" -eq "0" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Run all "test_*" function from this file.
 function runTests() {
     local failedTests=""
@@ -60,7 +74,6 @@ function runTests() {
         return 0
     fi
 }
-
 
 
 # regular henge run, verify right exit code
@@ -119,6 +132,18 @@ function test_complexOpenshift(){
 function test_wordpressKubernetes(){
     compareOutput "kubernetes" "${HENGE_ROOT}/test/fixtures/wordpress/docker-compose.yml" "${HENGE_ROOT}/test/fixtures/wordpress/docker-compose.k8s.converted.yml"
     return $?
+}
+
+
+function test_DefaultDockerComposeYml(){
+    checkDefaultFiles kubernetes docker-compose.yml
+    checkDefaultFiles openshift docker-compose.yml
+}
+
+
+function test_DefaultDockerComposeYaml(){
+    checkDefaultFiles kubernetes docker-compose.yaml
+    checkDefaultFiles openshift docker-compose.yaml
 }
 
 
